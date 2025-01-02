@@ -39,13 +39,17 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
 
     # Local apps
-    'backend.apps.st_client',
-    'backend.apps.c2',
+    'apps.users',
+    'apps.st_client',
+    'apps.c2',
 
     # Third party apps
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',  # Must be placed at the top
+
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -55,7 +59,18 @@ MIDDLEWARE = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
+# CORS_ALLOWED_ORIGINS = [
+#     "http://localhost:3000",
+# ]
+
+CORS_ALLOW_CREDENTIALS = True # Allows cookies to be sent with the request
+CORS_ALLOW_ALL_ORIGINS = True  # or restrict as needed
+
 ROOT_URLCONF = 'backend.urls'
+
+# Session Cookie Settings
+SESSION_COOKIE_SAMESITE = 'Lax'  # 'None' if using HTTPS
+SESSION_COOKIE_SECURE = False  # True if using HTTPS
 
 TEMPLATES = [
     {

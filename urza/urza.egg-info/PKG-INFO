@@ -1,0 +1,7 @@
+Metadata-Version: 2.1
+Name: urza
+Version: 1.0.0
+Summary: URZA as a packaged Python library
+Author: Aman Khadka
+Author-email: 
+Requires-Python: >=3.7

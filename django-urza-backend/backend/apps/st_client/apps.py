@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 
 
-class StClientConfig(AppConfig):
+class C2Config(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'st_client'
+    name = 'apps.st_client'
