@@ -1,4 +1,4 @@
-// next-urza-frontend/frontend/src/app/main/page.tsx
+// next-urza-frontend\frontend\src\app\main\page.tsx
 
 "use client"
 

@@ -1,4 +1,4 @@
-// next-urza-frontend/frontend/src/lib/api.ts
+// next-urza-frontend\frontend\src\lib\api.ts
 
 import axios from 'axios';
 

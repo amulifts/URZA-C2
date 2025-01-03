@@ -1,4 +1,4 @@
-// next-urza-frontend/frontend/src/app/layout.tsx
+// next-urza-frontend\frontend\src\app\layout.tsx
 
 import "./globals.css"
 import React from "react"

@@ -1,10 +1,10 @@
-// next-urza-frontend/frontend/src/components/urza/user-account-switcher.tsx
+// next-urza-frontend\frontend\src\components\urza\user-account-switcher.tsx
 
 "use client"
 
 import React, { useEffect, useState, useContext } from "react"
 import { useRouter } from "next/navigation"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import {
     DropdownMenu,
@@ -16,7 +16,7 @@ import {
 import { ChevronsUpDown, LogOut, Settings } from 'lucide-react'
 import { AuthContext } from "@/context/AuthContext"
 import axios from 'axios'
-import jwtDecode from 'jwt-decode' // Corrected import
+import jwtDecode from 'jwt-decode'
 import { toast } from 'react-toastify';
 
 interface UserData {
@@ -24,7 +24,6 @@ interface UserData {
     username: string
     full_name?: string
     role: string
-    image_url?: string
 }
 
 export function UserAccountSwitcher() {
@@ -99,7 +98,7 @@ export function UserAccountSwitcher() {
             const decoded: any = jwtDecode(access);
             // Update user context
             setUser({
-                id: decoded.user_id,
+                id: decoded.id,
                 username: decoded.username,
                 full_name: decoded.full_name,
                 role: decoded.role,
@@ -158,8 +157,9 @@ export function UserAccountSwitcher() {
                                     >
                                         <div className="relative">
                                             <Avatar className="h-9 w-9 rounded-sm border">
-                                                <AvatarImage src={u.image_url || "/placeholder.svg"} alt={u.username} className="rounded-sm" />
-                                                <AvatarFallback className="rounded-sm">{u.full_name ? u.full_name.charAt(0).toUpperCase() : u.username.charAt(0).toUpperCase()}</AvatarFallback>
+                                                <AvatarFallback className="rounded-sm">
+                                                    {u.full_name ? u.full_name.charAt(0).toUpperCase() : u.username.charAt(0).toUpperCase()}
+                                                </AvatarFallback>
                                             </Avatar>
                                             <div
                                                 className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full ring-2 ring-white ${isActive ? 'bg-green-500' : 'bg-gray-300'

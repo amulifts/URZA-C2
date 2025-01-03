@@ -1,4 +1,4 @@
-# django-urza-backend/backend/apps/users/admin.py
+# django-urza-backend\backend\apps\users\admin.py
 
 from django.contrib import admin
 from .models import Profile

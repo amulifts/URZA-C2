@@ -1,4 +1,4 @@
-// next-urza-frontend/frontend/src/components/urza/main-content-wrapper.tsx
+// next-urza-frontend\frontend\src\components\urza\main-content-wrapper.tsx
 
 import React from "react"
 

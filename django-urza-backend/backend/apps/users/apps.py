@@ -1,4 +1,4 @@
-# django-urza-backend/backend/apps/users/apps.py
+# django-urza-backend\backend\apps\users\apps.py
 
 from django.apps import AppConfig
 

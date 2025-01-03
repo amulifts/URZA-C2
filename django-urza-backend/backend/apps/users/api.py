@@ -1,4 +1,4 @@
-# django-urza-backend/backend/apps/users/api.py
+# django-urza-backend\backend\apps\users\api.py
 
 from ninja import Router, Form
 from pydantic import BaseModel, ConfigDict
@@ -54,7 +54,10 @@ class CustomTokenObtainPairSerializer(TokenObtainPairSerializer):
         token = super().get_token(user)
 
         # Add custom claims
+        token['id'] = user.id
+        token['username'] = user.username
         token['full_name'] = user.profile.full_name or ""
+        token['role'] = user.profile.role
 
         return token
 
@@ -110,6 +113,19 @@ def get_user(request, user_id: int):
     return UserOutSchema(
         id=user.id,
         username=user.username,
+        full_name=profile.full_name,
+        role=profile.role,
+    )
+
+@user_router.get("/me", response=UserOutSchema)
+def get_current_user(request):
+    if not request.user.is_authenticated:
+        raise HttpError(401, "Not authenticated.")
+
+    profile = request.user.profile
+    return UserOutSchema(
+        id=request.user.id,
+        username=request.user.username,
         full_name=profile.full_name,
         role=profile.role,
     )

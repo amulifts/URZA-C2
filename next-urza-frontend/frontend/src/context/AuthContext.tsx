@@ -1,4 +1,4 @@
-// next-urza-frontend/frontend/src/context/AuthContext.tsx
+// next-urza-frontend\frontend\src\context\AuthContext.tsx
 
 "use client";
 
@@ -103,7 +103,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       
       const decoded: any = jwtDecode(access);
       setUser({
-        id: decoded.user_id,
+        id: decoded.id,
         username: decoded.username,
         full_name: decoded.full_name,
         role: decoded.role,
@@ -145,7 +145,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         try {
           const decoded: any = jwtDecode(access);
           setUser({
-            id: decoded.user_id,
+            id: decoded.id,
             username: decoded.username,
             full_name: decoded.full_name,
             role: decoded.role,
