@@ -1,36 +1,40 @@
-// next-urza-frontend\frontend\src\app\register\page.tsx
+// next-urza-frontend/frontend/src/app/register/page.tsx
 
 "use client";
 
 import React, { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
+import axios from 'axios';
+import { toast } from 'react-toastify';
 
 type FormValues = {
   username: string;
   password: string;
   confirm_password: string;
   full_name?: string;
-  image_url?: string;
 };
 
 export default function RegisterPage() {
-  const [serverError, setServerError] = useState("");
-  const [serverSuccess, setServerSuccess] = useState("");
+  const [serverError, setServerError] = useState<string>("");
+  const [serverSuccess, setServerSuccess] = useState<string>("");
 
   const {
     register,
     handleSubmit,
     formState: { errors },
-    watch,
     reset,
-  } = useForm<FormValues>({ defaultValues: { username: "", password: "", confirm_password: "" }, });
+    watch,
+  } = useForm<FormValues>({
+    defaultValues: { username: "", password: "", confirm_password: "", full_name: "" },
+  });
 
   const router = useRouter();
 
   const onSubmit = async (data: FormValues) => {
     if (data.password !== data.confirm_password) {
       setServerError("Passwords do not match.");
+      toast.error("Passwords do not match.");
       return;
     }
 
@@ -38,32 +42,53 @@ export default function RegisterPage() {
       setServerError("");
       setServerSuccess("");
 
-      const response = await fetch("http://localhost:8000/api/users/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username: data.username,
-          password: data.password,
-          full_name: data.full_name,
-          image_url: data.image_url,
-        }),
+      const payload = {
+        username: data.username,
+        password: data.password,
+        confirm_password: data.confirm_password,
+        full_name: data.full_name || undefined,
+      };
+
+      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users/create`, payload, {
+        withCredentials: true,
       });
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || "Failed to create user.");
+      if (response.status === 200) {
+        setServerSuccess(`User '${response.data.username}' created successfully! Redirecting to login...`);
+        toast.success(`User '${response.data.username}' created successfully! Redirecting to login...`);
+        reset(); // Clear the form
+
+        // Redirect after a short delay to show success message
+        setTimeout(() => {
+          router.push("/login");
+        }, 2000);
       }
-
-      const result = await response.json();
-      setServerSuccess(`User '${result.username}' created successfully! Redirecting to login...`);
-      reset(); // Clear the form
-
-      // Redirect after a short delay to show success message
-      setTimeout(() => {
-        router.push("/login");
-      }, 2000);
     } catch (error: any) {
-      setServerError(error.message || "An error occurred.");
+      if (axios.isAxiosError(error)) {
+        if (error.response && error.response.data) {
+          if (typeof error.response.data.detail === 'string') {
+            setServerError(error.response.data.detail);
+            toast.error(error.response.data.detail);
+          } else if (Array.isArray(error.response.data.detail)) {
+            const messages = error.response.data.detail.map((err: any) => err.msg).join(", ");
+            setServerError(messages);
+            toast.error(messages);
+          } else if (typeof error.response.data.detail === 'object') {
+            const messages = Object.values(error.response.data.detail).flat().map((err: any) => err.msg).join(", ");
+            setServerError(messages);
+            toast.error(messages);
+          } else {
+            setServerError("An error occurred.");
+            toast.error("An error occurred.");
+          }
+        } else {
+          setServerError("An error occurred.");
+          toast.error("An error occurred.");
+        }
+      } else {
+        setServerError("An unexpected error occurred.");
+        toast.error("An unexpected error occurred.");
+      }
     }
   };
 
@@ -75,6 +100,7 @@ export default function RegisterPage() {
         onSubmit={handleSubmit(onSubmit)}
         className="flex flex-col space-y-4"
       >
+
         {/* Username */}
         <div>
           <label className="block mb-1">Username</label>
@@ -120,20 +146,11 @@ export default function RegisterPage() {
           )}
         </div>
 
-         {/* Full Name */}
-         <div>
+        {/* Full Name */}
+        <div>
           <label className="block mb-1">Full Name</label>
           <input
             {...register("full_name")}
-            className="border p-2 rounded w-full"
-          />
-        </div>
-
-        {/* Image URL */}
-        <div>
-          <label className="block mb-1">Image URL</label>
-          <input
-            {...register("image_url")}
             className="border p-2 rounded w-full"
           />
         </div>

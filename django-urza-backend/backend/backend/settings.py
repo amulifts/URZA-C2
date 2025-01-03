@@ -1,3 +1,5 @@
+# django-urza-backend\backend\backend\settings.py
+
 """
 Django settings for backend project.
 
@@ -11,6 +13,7 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -45,6 +48,10 @@ INSTALLED_APPS = [
 
     # Third party apps
     'corsheaders',
+    'ninja',
+    'rest_framework',
+    'rest_framework_simplejwt',
+    'rest_framework_simplejwt.token_blacklist',
 ]
 
 MIDDLEWARE = [
@@ -53,29 +60,54 @@ MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
+    # 'django.middleware.csrf.CsrfViewMiddleware', # Remove if not using session-based auth
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-# CORS_ALLOWED_ORIGINS = [
-#     "http://localhost:3000",
-# ]
+# REST Framework Configuration
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    ),
+}
 
+from datetime import timedelta
+
+# Simple JWT Configuration
+SIMPLE_JWT = {
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=30),
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=1),
+    'ROTATE_REFRESH_TOKENS': False,
+    'BLACKLIST_AFTER_ROTATION': True,
+    'UPDATE_LAST_LOGIN': False,
+    'ALGORITHM': 'HS256',
+    'SIGNING_KEY': SECRET_KEY,
+    'AUTH_HEADER_TYPES': ('Bearer',),
+    'USER_ID_FIELD': 'id',
+    'USER_ID_CLAIM': 'user_id',
+    'TOKEN_OBTAIN_SERIALIZER': 'apps.users.api.CustomTokenObtainPairSerializer',
+}
+
+# CORS Configuration
 CORS_ALLOW_CREDENTIALS = True # Allows cookies to be sent with the request
-CORS_ALLOW_ALL_ORIGINS = True  # or restrict as needed
+CORS_ALLOW_ALL_ORIGINS = True  # Restrict in production
+# CORS_ALLOWED_ORIGINS = [
+#     "http://localhost:3001",  # Your frontend URL
+#     "http://10.211.55.16:3001" # Your frontend URL
+# ]
 
 ROOT_URLCONF = 'backend.urls'
 
 # Session Cookie Settings
-SESSION_COOKIE_SAMESITE = 'Lax'  # 'None' if using HTTPS
-SESSION_COOKIE_SECURE = False  # True if using HTTPS
+# SESSION_COOKIE_SAMESITE = 'Lax'  # 'Strict' or 'None' as needed
+# SESSION_COOKIE_SECURE = False  # True if using HTTPS
 
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [], # Add template directories if needed
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -134,11 +166,14 @@ USE_L10N = True
 
 USE_TZ = True
 
-
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.2/howto/static-files/
 
 STATIC_URL = '/static/'
+
+# Media files (Uploaded Images)
+MEDIA_URL = '/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/3.2/ref/settings/#default-auto-field

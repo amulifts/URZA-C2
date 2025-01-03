@@ -1,10 +1,13 @@
-// next-urza-frontend\frontend\src\app\page.tsx
+// next-urza-frontend/frontend/src/app/login/page.tsx
 
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
+import { AuthContext } from "@/context/AuthContext";
+import { toast } from 'react-toastify';
+import axios from 'axios';
 
 type FormValues = {
   username: string;
@@ -12,8 +15,8 @@ type FormValues = {
 };
 
 export default function LoginPage() {
-  const [serverError, setServerError] = useState("");
-  const [serverSuccess, setServerSuccess] = useState("");
+  const [serverError, setServerError] = useState<string>("");
+  const [serverSuccess, setServerSuccess] = useState<string>("");
 
   const {
     register,
@@ -23,40 +26,32 @@ export default function LoginPage() {
   } = useForm<FormValues>({ defaultValues: { username: "", password: "" } });
 
   const router = useRouter();
+  const { login, user } = useContext(AuthContext);
 
   const onSubmit = async (data: FormValues) => {
     try {
-      setServerError("");
-      setServerSuccess("");
+      await login(data.username, data.password);
+      setServerSuccess("Login successful! Redirecting to main page...");
+      toast.success("Login successful! Redirecting to main page...");
+      reset(); // Clear the form
 
-      const response = await fetch("http://localhost:8000/api/users/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-        // If using cookies/sessions
-        credentials: 'include'
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.detail || "Failed to login.");
-      }
-
-      const result = await response.json();
-
-      if (result.success) {
-        setServerSuccess("Login successful! Redirecting to main page...")
-        reset(); // Clear the form
-
-        // Redirect after a short delay to show success message
-        setTimeout(() => {
-          router.push("/main");
-        }, 2000)
-      } else {
-        setServerError(result.message || "Invalid credentials.");
-      }
+      // Redirect after a short delay to show success message
+      setTimeout(() => {
+        router.push("/main");
+      }, 2000);
     } catch (error: any) {
-      setServerError(error.message || "An error occurred.");
+      if (axios.isAxiosError(error)) {
+        if (error.response && error.response.data && typeof error.response.data.detail === 'string') {
+          setServerError(error.response.data.detail);
+          toast.error(error.response.data.detail);
+        } else {
+          setServerError("Login failed.");
+          toast.error("Login failed.");
+        }
+      } else {
+        setServerError("An unexpected error occurred.");
+        toast.error("An unexpected error occurred.");
+      }
     }
   };
 

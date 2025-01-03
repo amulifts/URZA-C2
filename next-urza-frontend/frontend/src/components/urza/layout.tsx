@@ -1,9 +1,9 @@
-// next-urza-frontend\frontend\src\components\urza\layout.tsx
+// next-urza-frontend/frontend/src/components/urza/layout.tsx
 
 "use client"
 
 import { cn } from "@/lib/utils"
-import { BarChart, Database, Home, Layers, LayoutTemplate, ListEnd, Radio, Share2, Terminal, Users } from 'lucide-react'
+import { BarChart, Home, Layers, LayoutTemplate, ListEnd, Radio, Share2, Terminal, Users } from 'lucide-react'
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { UserAccountSwitcher } from "@/components/urza/user-account-switcher"
@@ -27,7 +27,6 @@ export function Sidebar({ className }: SidebarProps) {
       icon: Radio,
       href: '/listeners',
       color: "text-gray-500",
-      // isActive: pathname === '/listeners'
     },
     {
       label: 'Launchers',
@@ -102,4 +101,3 @@ export function Sidebar({ className }: SidebarProps) {
     </div>
   )
 }
-

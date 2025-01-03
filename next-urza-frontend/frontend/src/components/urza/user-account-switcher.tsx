@@ -1,8 +1,8 @@
-// next-urza-frontend\frontend\src\components\urza\user-account-switcher.tsx
+// next-urza-frontend/frontend/src/components/urza/user-account-switcher.tsx
 
 "use client"
 
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useState, useContext } from "react"
 import { useRouter } from "next/navigation"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
@@ -14,74 +14,48 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { ChevronsUpDown, LogOut, Settings } from 'lucide-react'
+import { AuthContext } from "@/context/AuthContext"
+import axios from 'axios'
+import jwtDecode from 'jwt-decode' // Corrected import
+import { toast } from 'react-toastify';
 
 interface UserData {
     id: number
     username: string
     full_name?: string
-    role?: string
+    role: string
     image_url?: string
-  }
+}
 
 export function UserAccountSwitcher() {
     const router = useRouter()
-    const [currentUser, setCurrentUser] = useState<UserData | null>(null)
+    const { user, logout, setUser } = useContext(AuthContext)
     const [allUsers, setAllUsers] = useState<UserData[]>([])
     const [isAdmin, setIsAdmin] = useState(false)
     const [loading, setLoading] = useState<boolean>(true)
     const [error, setError] = useState<string | null>(null)
-  
-    // 1) Load the current user from /me
+
     useEffect(() => {
-        const fetchCurrentUser = async () => {
-            try {
-                const res = await fetch("http://localhost:8000/api/users/me", { credentials: "include" })
-                if (!res.ok) {
-                    if (res.status === 401) {
-                        // Not authenticated, redirect to login
-                        router.push("/login")
-                        return
-                    } else {
-                        // Other errors
-                        throw new Error(`Failed to fetch user data. Status: ${res.status}`)
-                    }
-                }
-                const data: UserData = await res.json()
-                setCurrentUser(data)
-                if (data.role === "Admin") {
-                    setIsAdmin(true)
-                }
-            } catch (err: any) {
-                console.error(err)
-                setError("Failed to load user data.")
-            } finally {
-                setLoading(false)
+        if (user) {
+            if (user.role === "Admin") {
+                setIsAdmin(true)
+                fetchAllUsers()
             }
+            setLoading(false)
+        } else {
+            setLoading(false)
         }
+    }, [user])
 
-        fetchCurrentUser()
-    }, [router])
-
-    // 2) If isAdmin, load all users
-    useEffect(() => {
-        const fetchAllUsers = async () => {
-            try {
-                const res = await fetch("http://localhost:8000/api/users/list", { credentials: "include" })
-                if (!res.ok) {
-                    throw new Error("Failed to fetch user list.")
-                }
-                const data: UserData[] = await res.json()
-                setAllUsers(data)
-            } catch (err: any) {
-                console.error(err)
-                setError("Failed to load user list.")
-            }
+    const fetchAllUsers = async () => {
+        try {
+            const res = await axios.get(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users/list`, { withCredentials: true })
+            setAllUsers(res.data)
+        } catch (err: any) {
+            console.error(err)
+            setError("Failed to load user list.")
         }
-
-        if (isAdmin) {
-            fetchAllUsers()
-        }
-    }, [isAdmin])
+    }
 
     if (loading) {
         return (
@@ -99,44 +73,42 @@ export function UserAccountSwitcher() {
         )
     }
 
-    if (!currentUser) {
-        return null // Already redirected to login
+    if (!user) {
+        return null // User is not authenticated
     }
 
-    // 3) Logout
+    // Logout Function
     const handleLogout = async () => {
         try {
-            const res = await fetch("http://localhost:8000/api/users/logout", {
-                method: "POST",
-                credentials: "include",
-            })
-            if (res.ok) {
-                router.push("/login")
-            } else {
-                console.error("Failed to logout")
-            }
+            await logout()
         } catch (err) {
             console.error(err)
         }
     }
 
-    // 4) Impersonate user
+    // Impersonate Function
     const handleImpersonate = async (userId: number) => {
         try {
-            const res = await fetch(`http://localhost:8000/api/users/impersonate/${userId}`, {
-                method: "POST",
-                credentials: "include",
-            })
-            if (!res.ok) {
-                const errorData = await res.json()
-                throw new Error(errorData.error || "Failed to impersonate user.")
-            }
-            const data: UserData = await res.json()
-            // After impersonation, reload the user data
-            router.refresh() // This will trigger a reload of the current page
+            const response = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users/impersonate/${userId}`, {}, {
+                withCredentials: true,
+            });
+            const { access, refresh } = response.data;
+            localStorage.setItem('access_token', access);
+            localStorage.setItem('refresh_token', refresh);
+            
+            const decoded: any = jwtDecode(access);
+            // Update user context
+            setUser({
+                id: decoded.user_id,
+                username: decoded.username,
+                full_name: decoded.full_name,
+                role: decoded.role,
+            });
+            toast.success(`Impersonated as ${decoded.username}. Redirecting to main page...`);
+            router.push("/main");
         } catch (err: any) {
-            console.error(err)
-            // Optionally, display an error message to the user
+            console.error(err);
+            toast.error("Failed to impersonate user.");
         }
     }
 
@@ -153,62 +125,63 @@ export function UserAccountSwitcher() {
                     <Button variant="ghost" className="w-full flex items-center gap-3 p-4 h-auto relative">
                         <div className="relative">
                             <Avatar className="h-9 w-9 rounded-sm border">
-                                <AvatarImage src={currentUser.image_url || "/placeholder.svg"} alt={currentUser.username} className="rounded-sm" />
-                                <AvatarFallback className="rounded-sm">{currentUser.username[0].toUpperCase()}</AvatarFallback>
+                                <AvatarFallback className="rounded-sm">
+                                {user.full_name ? user.full_name.charAt(0).toUpperCase() : user.username.charAt(0).toUpperCase()}
+                                </AvatarFallback>
                             </Avatar>
                             <div className="absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full bg-green-500 ring-2 ring-white" />
                         </div>
                         <div className="flex-1 text-left">
-                            <p className="text-sm font-bold leading-tight">{currentUser.full_name || currentUser.username}</p>
-                            <p className="text-xs text-muted-foreground">{currentUser.role}</p>
+                            <p className="text-sm font-bold leading-tight">{user.full_name || user.username}</p>
+                            <p className="text-xs text-muted-foreground">{user.role}</p>
                         </div>
                         <ChevronsUpDown className="h-4 w-4 text-muted-foreground" />
                     </Button>
                 </DropdownMenuTrigger>
             </div>
             <DropdownMenuContent className="w-[280px] user-account-switcher-content" align="end" alignOffset={-6} sideOffset={8} forceMount>
-                
+
                 {/* If Admin, show the user-switching section */}
                 {isAdmin && (
-                <div className="px-2 pt-2 pb-1">
-                    <h4 className="text-sm font-medium leading-none mb-3">Switch account</h4>
-                    <div className="space-y-1">
-                        {allUsers.map((user) => {
-                            const isActive = user.id === currentUser.id;
-                            return (
-                                // DropdownMenuItem is a styled <button>
-                                <button
-                                    key={user.id}
-                                    onClick={() => handleImpersonate(user.id)}
-                                    className={`w-full flex items-center gap-3 rounded-lg p-2 transition-colors ${isActive ? 'bg-gray-100' : 'hover:bg-gray-50'
-                                        }`}
-                                >
-                                    <div className="relative">
-                                        <Avatar className="h-9 w-9 rounded-sm border">
-                                            <AvatarImage src={user.image_url || "/placeholder.svg"} alt={user.username} className="rounded-sm" />
-                                            <AvatarFallback className="rounded-sm">{user.username[0].toUpperCase()}</AvatarFallback>
-                                        </Avatar>
-                                        <div
-                                            className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full ring-2 ring-white ${isActive ? 'bg-green-500' : 'bg-gray-300'
-                                                }`}
-                                        />
-                                    </div>
-                                    <div className="flex flex-col items-start">
-                                        <span className="text-sm font-medium">{user.full_name || user.username}</span>
-                                        <span className="text-xs text-muted-foreground">{user.role}</span>
-                                    </div>
-                                </button>
-                            );
-                        })}
+                    <div className="px-2 pt-2 pb-1">
+                        <h4 className="text-sm font-medium leading-none mb-3">Switch account</h4>
+                        <div className="space-y-1">
+                            {allUsers.map((u) => {
+                                const isActive = u.id === user.id;
+                                return (
+                                    // DropdownMenuItem is a styled <button>
+                                    <button
+                                        key={u.id}
+                                        onClick={() => handleImpersonate(u.id)}
+                                        className={`w-full flex items-center gap-3 rounded-lg p-2 transition-colors ${isActive ? 'bg-gray-100' : 'hover:bg-gray-50'
+                                            }`}
+                                    >
+                                        <div className="relative">
+                                            <Avatar className="h-9 w-9 rounded-sm border">
+                                                <AvatarImage src={u.image_url || "/placeholder.svg"} alt={u.username} className="rounded-sm" />
+                                                <AvatarFallback className="rounded-sm">{u.full_name ? u.full_name.charAt(0).toUpperCase() : u.username.charAt(0).toUpperCase()}</AvatarFallback>
+                                            </Avatar>
+                                            <div
+                                                className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full ring-2 ring-white ${isActive ? 'bg-green-500' : 'bg-gray-300'
+                                                    }`}
+                                            />
+                                        </div>
+                                        <div className="flex flex-col items-start">
+                                            <span className="text-sm font-medium">{u.full_name || u.username}</span>
+                                            <span className="text-xs text-muted-foreground">{u.role}</span>
+                                        </div>
+                                    </button>
+                                );
+                            })}
+                        </div>
                     </div>
-                </div>
                 )}
 
                 <DropdownMenuSeparator className="my-1" />
                 <div className="p-2">
                     <DropdownMenuItem
                         className="w-full flex items-center gap-2 rounded-lg p-2 text-sm cursor-pointer"
-                        onClick={() => router.push(`/users/${currentUser.username.toLowerCase().replace(' ', '-')}`)}
+                        onClick={() => router.push(`/users/${user.username.toLowerCase().replace(' ', '-')}`)}
                     >
                         <Settings className="h-4 w-4" />
                         Account settings
@@ -222,4 +195,3 @@ export function UserAccountSwitcher() {
         </DropdownMenu>
     )
 }
-
