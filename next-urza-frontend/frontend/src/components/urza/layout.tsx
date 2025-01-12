@@ -3,7 +3,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { Home, BarChart, Layers, LayoutTemplate, ListEnd, Radio, Share2, Terminal, Users } from 'lucide-react';
+import { Home, BarChart, Layers, LayoutTemplate, ListEnd, Radio,Server, Share2, Terminal, Users } from 'lucide-react';
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { UserAccountSwitcher } from "@/components/urza/user-account-switcher";
@@ -19,6 +19,12 @@ export function Sidebar({ className }: SidebarProps) {
   const { user } = useContext(AuthContext); // Access user info from AuthContext
 
   const routes = [
+    {
+      label: 'TeamServer',
+      icon: Server,
+      href: '/teamserver',
+      color: "text-gray-500",
+    },
     {
       label: 'Dashboard',
       icon: Home,

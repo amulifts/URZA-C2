@@ -1,0 +1,20 @@
+Metadata-Version: 2.1
+Name: aesedb
+Version: 0.1.6
+Summary: NTDS parser toolkit
+Home-page: https://github.com/skelsec/aesedb
+Author: Tamas Jos
+Author-email: info@skelsecprojects.com
+License: Modified Apache Software License 1.1
+Platform: UNKNOWN
+Classifier: Programming Language :: Python :: 3.6
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.6
+License-File: LICENSE
+Requires-Dist: aiowinreg (>=0.0.7)
+Requires-Dist: colorama
+Requires-Dist: tqdm
+Requires-Dist: unicrypto (>=0.0.9)
+
+UNKNOWN
+

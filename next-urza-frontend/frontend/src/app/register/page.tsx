@@ -1,6 +1,5 @@
 // next-urza-frontend\frontend\src\app\register\page.tsx
 
-// src/app/register/page.tsx
 "use client"
 
 import React, { useState } from "react"
