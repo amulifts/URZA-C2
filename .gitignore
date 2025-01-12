@@ -1,0 +1,56 @@
+# Python artifacts
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+*.sqlite3
+
+# Bytecode-compiled Python files
+*.cpython-*.pyc
+
+# Virtual environment
+venv/
+.env
+*.env
+
+# Node.js artifacts
+node_modules/
+*.log
+*.cache
+
+# Django-specific
+*.log
+*.pot
+*.pyc
+*.pyo
+*.pyd
+db.sqlite3
+/static/
+media/
+
+# macOS-specific
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Editor/IDE-specific
+.vscode/
+.idea/
+*.swp
+*.swo
+*.bak
+
+# Build artifacts
+/dist/
+build/
+
+# Logs
+*.log
+
+# Custom project paths
+urza/urza/core/teamserver/modules/boo/minidump.py
+urza/urza/core/teamserver/stagers/__pycache__/
+
+# Ignore all __pycache__ and compiled Python files under teamserver
+urza/urza/core/teamserver/**/__pycache__/
+urza/urza/core/teamserver/**/*.pyc
