@@ -1,3 +1,5 @@
+# urza\urza\core\teamserver\comms\wmi.boo
+
 from System.Management import ManagementClass
 
 

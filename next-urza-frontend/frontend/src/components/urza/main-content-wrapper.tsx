@@ -1,15 +1,13 @@
 // next-urza-frontend\frontend\src\components\urza\main-content-wrapper.tsx
 
-import React from "react"
-
 interface MainContentWrapperProps {
-    children: React.ReactNode
+  children: React.ReactNode
 }
 
-export const MainContentWrapper: React.FC<MainContentWrapperProps> = ({ children }) => {
-    return (
-        <div className="p-4">
-            {children}
-        </div>
-    )
+export function MainContentWrapper({ children }: MainContentWrapperProps) {
+  return (
+    <div className="p-6 space-y-4">
+      {children}
+    </div>
+  )
 }

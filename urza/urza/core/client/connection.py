@@ -1,3 +1,5 @@
+# urza\urza\core\client\connection.py
+
 import asyncio
 import websockets
 import hmac

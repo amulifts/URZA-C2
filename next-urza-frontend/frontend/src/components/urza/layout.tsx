@@ -1,19 +1,22 @@
 // next-urza-frontend\frontend\src\components\urza\layout.tsx
 
-"use client"
+"use client";
 
-import { cn } from "@/lib/utils"
-import { Home, BarChart, Layers, LayoutTemplate, ListEnd, Radio, Share2, Terminal, Users } from 'lucide-react'
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import { UserAccountSwitcher } from "@/components/urza/user-account-switcher"
+import { cn } from "@/lib/utils";
+import { Home, BarChart, Layers, LayoutTemplate, ListEnd, Radio, Share2, Terminal, Users } from 'lucide-react';
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { UserAccountSwitcher } from "@/components/urza/user-account-switcher";
+import { useContext } from "react";
+import { AuthContext } from "@/context/AuthContext";
 
 interface SidebarProps extends React.HTMLAttributes<HTMLDivElement> {
-  className?: string
+  className?: string;
 }
 
 export function Sidebar({ className }: SidebarProps) {
-  const pathname = usePathname()
+  const pathname = usePathname();
+  const { user } = useContext(AuthContext); // Access user info from AuthContext
 
   const routes = [
     {
@@ -64,13 +67,17 @@ export function Sidebar({ className }: SidebarProps) {
       href: '/graph',
       color: "text-gray-500",
     },
-    {
+  ];
+
+  // Add the Users route only for Admin users
+  if (user?.role === "Admin") {
+    routes.push({
       label: 'Users',
       icon: Users,
       href: '/users',
       color: "text-gray-500",
-    },
-  ]
+    });
+  }
 
   return (
     <div className="h-full flex flex-col p-4">
@@ -99,5 +106,5 @@ export function Sidebar({ className }: SidebarProps) {
         </div>
       </div>
     </div>
-  )
+  );
 }

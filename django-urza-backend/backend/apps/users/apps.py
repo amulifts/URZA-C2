@@ -1,4 +1,4 @@
-# django-urza-backend\backend\apps\users\apps.py
+# django-urza-backend/backend/apps/users/apps.py
 
 from django.apps import AppConfig
 
@@ -7,4 +7,4 @@ class UsersConfig(AppConfig):
     name = 'apps.users'
 
     def ready(self):
-        import apps.users.signals  # Ensure signals are registered
+        import apps.users.signals  # Import the signals module

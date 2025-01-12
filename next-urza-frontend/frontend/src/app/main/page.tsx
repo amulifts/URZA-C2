@@ -26,6 +26,7 @@ export default function DashboardPage() {
       <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>
       <div className="space-y-6">
         <p>Welcome, {user?.full_name || user?.username}!</p>
+        <p>Your role: {user?.role}</p>
       </div>
     </MainContentWrapper>
   )

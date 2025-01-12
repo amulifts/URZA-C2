@@ -1,3 +1,5 @@
+# urza\urza\core\teamserver\stagers\shellcode.py
+
 import uuid
 import donut
 

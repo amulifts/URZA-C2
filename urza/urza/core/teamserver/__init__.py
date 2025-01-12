@@ -1,3 +1,5 @@
+# urza\urza\core\teamserver\__init__.py
+
 import logging
 import multiprocessing
 from urza.core.ipcserver import IPCServer

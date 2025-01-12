@@ -1,4 +1,4 @@
-#! /usr/bin/env python3
+# urza\urza\__main__.py
 
 """
 Usage: st [-h] [-v] (client|teamserver) [<args>...]

@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+# urza\urza\core\teamserver\__main__.py
 
 """
 Usage: teamserver [-h] [--port <PORT>] [--insecure] <host> <password>
