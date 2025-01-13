@@ -30,7 +30,6 @@ export function TeamServerClientConnection() {
     password: 'admin',
   })
   const [rememberCredentials, setRememberCredentials] = useState(false)
-  const [showConnectionHistory, setShowConnectionHistory] = useState(false)
 
   useEffect(() => {
     let interval: NodeJS.Timeout
@@ -118,23 +117,67 @@ export function TeamServerClientConnection() {
   }
 
   const handleDisconnect = async () => {
-    // Make API call to backend to terminate the client
-    try {
-      await apiClient.post("/st_client/terminate/", {}) // Assuming this endpoint exists
+    const refreshToken = localStorage.getItem("refresh_token")
+    const accessToken = localStorage.getItem("access_token")
 
-      setIsConnected(false)
-      setConnectionUptime(0)
-      toast("Disconnected from TeamServer", {
-        type: "default",
+    if (!refreshToken || !accessToken) {
+      toast.error("No active connection found.", {
         position: "top-right",
         autoClose: 3000,
       })
+      return
+    }
+
+    try {
+      toast.info("Disconnecting from TeamServer...", {
+        position: "top-right",
+        autoClose: 2000,
+      })
+
+      const response = await apiClient.post("/st_client/disconnect/", {})
+
+      if (response.status === 200) {
+        setIsConnected(false)
+        setConnectionUptime(0)
+        toast.success("Successfully disconnected from TeamServer", {
+          position: "top-right",
+          autoClose: 3000,
+        })
+      } else {
+        toast.error("Failed to disconnect from TeamServer", {
+          position: "top-right",
+          autoClose: 3000,
+        })
+      }
     } catch (error: any) {
       console.error("Disconnection Error:", error)
-      toast.error("Failed to disconnect from TeamServer", {
-        position: "top-right",
-        autoClose: 3000,
-      })
+      if (error.response && error.response.data) {
+        const detail = error.response.data.detail
+        if (Array.isArray(detail)) {
+          const messages = detail.map((item: any) => item.msg || JSON.stringify(item)).join(', ')
+          toast.error(`Error: ${messages}`, {
+            position: "top-right",
+            autoClose: 3000,
+          })
+        } else if (typeof detail === 'object') {
+          // If detail is a dict, convert it to string
+          const messages = Object.values(detail).flat().join(', ')
+          toast.error(`Error: ${messages}`, {
+            position: "top-right",
+            autoClose: 3000,
+          })
+        } else {
+          toast.error(`Error: ${detail}`, {
+            position: "top-right",
+            autoClose: 3000,
+          })
+        }
+      } else {
+        toast.error("An error occurred while disconnecting.", {
+          position: "top-right",
+          autoClose: 3000,
+        })
+      }
     }
   }
 
@@ -310,32 +353,6 @@ export function TeamServerClientConnection() {
               </CardContent>
             </Card>
           )}
-
-          {/* Connection History */}
-          <Collapsible>
-            <CollapsibleTrigger asChild>
-              <Button variant="ghost">Connection History</Button>
-            </CollapsibleTrigger>
-            <CollapsibleContent className="space-y-2">
-              <ScrollArea className="h-[200px] w-full rounded-md border p-4">
-                <div className="space-y-2">
-                  <div className="flex justify-between items-center">
-                    <span>ws://localhost:6000</span>
-                    <Button variant="ghost" size="sm">Connect</Button>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span>wss://example.com:6001</span>
-                    <Button variant="ghost" size="sm">Connect</Button>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    <span>ws://192.168.1.100:6000</span>
-                    <Button variant="ghost" size="sm">Connect</Button>
-                  </div>
-                </div>
-              </ScrollArea>
-              <Button variant="outline" size="sm">Clear History</Button>
-            </CollapsibleContent>
-          </Collapsible>
         </CardContent>
       </Card>
     </div>
