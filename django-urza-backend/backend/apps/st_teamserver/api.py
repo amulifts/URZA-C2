@@ -4,7 +4,13 @@ from ninja import Router
 from ninja.errors import HttpError
 import logging
 from .process_manager import TeamServerManager
-from .schemas import StartTeamServerSchema, TeamServerResponseSchema, StopTeamServerResponseSchema, LogEntrySchema
+from .schemas import (
+    StartTeamServerSchema,
+    TeamServerResponseSchema,
+    StopTeamServerResponseSchema,
+    LogEntrySchema,
+    TeamServerSchema
+)
 from apps.security import SimpleJWTBearer
 from typing import List, Optional
 from django.conf import settings
@@ -66,7 +72,7 @@ def stop_teamserver(request):
     except Exception as e:
         logger.exception("Failed to stop TeamServer.")
         raise HttpError(500, "Internal Server Error: Unable to stop TeamServer.")
-    
+
 @router.get("/logs/", response=List[LogEntrySchema], auth=SimpleJWTBearer())
 def get_logs(request, limit: int = 100, level: Optional[str] = None):
     """
@@ -93,6 +99,9 @@ def get_logs(request, limit: int = 100, level: Optional[str] = None):
 
             log_entries = [json.loads(line) for line in recent_lines]
 
+            # Update TeamServer statuses based on logs
+            # teamserver_manager.update_teamserver_statuses(log_entries)
+
             if level:
                 log_entries = [entry for entry in log_entries if entry.get('level').upper() == level.upper()]
                 logger.debug(f"Filtering logs by level: {level}. Logs found: {len(log_entries)}")
@@ -107,3 +116,10 @@ def get_logs(request, limit: int = 100, level: Optional[str] = None):
     except Exception as e:
         logger.exception(f"Failed to read log file: {e}")
         return []
+
+# @router.get("/list/", response=List[TeamServerSchema], auth=SimpleJWTBearer())
+# def list_teamservers(request):
+#     """
+#     Retrieve the list of all TeamServers with their current statuses.
+#     """
+#     return teamserver_manager.get_teamservers()

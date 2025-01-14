@@ -1,4 +1,4 @@
-// next-urza-frontend\frontend\src\components\urza\teamserver-client\teamserver-list.tsx
+// next-urza-frontend/frontend/src/components/urza/teamserver-client/teamserver-list.tsx
 
 "use client"
 
@@ -11,91 +11,140 @@ import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { RefreshCw, Star, Copy, Trash2, LinkIcon, Plus } from 'lucide-react';
 import { toast } from "react-toastify";
-import {apiClient} from "@/lib/api";
-import Modal from "@/components/ui/modal"; // Ensure this component exists
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { apiClient } from "@/lib/api";
 
 interface TeamServer {
-  id: number;
   name: string;
-  status: 'online' | 'offline' | 'unstable';
   host: string;
   port: number;
-  protocol: 'WS' | 'WSS';
-  last_seen: string;
+  protocol: string; // 'WS' or 'WSS'
   is_favorite: boolean;
+  status: string; // 'online', 'offline', 'unstable'
+  last_seen: string | null;
+}
+
+interface LogEntry {
+  time: string;
+  level: string;
+  message: string;
+  name: string;
+  filename: string;
+  lineno: number;
+  funcName: string;
 }
 
 export function TeamServerList() {
-  const [teamServers, setTeamServers] = useState<TeamServer[]>([]);
+  const [teamServers, setTeamServers] = useState<TeamServer[]>([
+    { name: 'TeamServer1', host: '0.0.0.0', port: 6000, protocol: 'WS', is_favorite: false, status: 'offline', last_seen: null },
+    { name: 'TeamServer2', host: '0.0.0.0', port: 6001, protocol: 'WS', is_favorite: false, status: 'offline', last_seen: null },
+    { name: 'TeamServer3', host: '0.0.0.0', port: 6002, protocol: 'WS', is_favorite: false, status: 'offline', last_seen: null },
+    { name: 'TeamServer4', host: '0.0.0.0', port: 6003, protocol: 'WSS', is_favorite: false, status: 'offline', last_seen: null },
+    { name: 'TeamServer5', host: '0.0.0.0', port: 6004, protocol: 'WS', is_favorite: false, status: 'offline', last_seen: null },
+    // Add more TeamServers as needed
+  ]);
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newServer, setNewServer] = useState({
-    host: '',
-    password: '',
-    port: '',
-    secure: false,
-    is_favorite: false,
-  });
   const router = useRouter();
 
-  const fetchTeamServers = async () => {
-    setIsRefreshing(true);
+  // Function to fetch logs and update TeamServers' statuses
+  const fetchLogs = async () => {
     try {
-      const response = await apiClient.get("/st_teamserver/list/");
+      const response = await apiClient.get("/st_teamserver/logs/", { params: { limit: 100 } });
       if (response.status === 200) {
-        setTeamServers(response.data);
+        const logs: LogEntry[] = response.data;
+        updateTeamServerStatuses(logs);
       } else {
-        toast.error("Failed to fetch TeamServers.", {
+        toast.error("Failed to fetch logs.", {
           position: "top-right",
           autoClose: 3000,
         });
       }
     } catch (error: any) {
       console.error(error);
-      toast.error("An error occurred while fetching TeamServers.", {
+      toast.error("An error occurred while fetching logs.", {
         position: "top-right",
         autoClose: 3000,
       });
-    } finally {
-      setIsRefreshing(false);
     }
   };
 
+  // Function to update TeamServers' statuses based on logs
+  const updateTeamServerStatuses = (logs: LogEntry[]) => {
+    const updatedServers = teamServers.map(server => {
+      // Initialize as offline
+      let status: 'online' | 'offline' | 'unstable' = 'offline';
+      let lastSeen: string | null = server.last_seen;
+
+      // Iterate over logs to find start/stop events for this server
+      logs.forEach(log => {
+        // Clean the message by removing ANSI escape codes
+        const message_clean = cleanMessage(log.message);
+
+        // Detect TeamServer start
+        const startMatch = message_clean.match(new RegExp(`^Teamserver started on\\s+${escapeRegExp(server.host)}:${server.port}$`, 'i'));
+        if (startMatch) {
+          status = 'online';
+          lastSeen = log.time;
+        }
+
+        // Detect TeamServer stop
+        const stopMatch = message_clean.match(new RegExp(`^Teamserver stopped on\\s+${escapeRegExp(server.host)}:${server.port}$`, 'i'));
+        if (stopMatch) {
+          status = 'offline';
+          lastSeen = log.time;
+        }
+      });
+
+      return { ...server, status, last_seen: lastSeen };
+    });
+
+    setTeamServers(updatedServers);
+  };
+
+  // Utility function to escape regex special characters in strings
+  const escapeRegExp = (string: string) => {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  };
+
+  // Utility function to remove ANSI escape codes
+  const cleanMessage = (message: string) => {
+    return message.replace(/\x1B[@-_][0-?]*[ -/]*[@-~]/g, '');
+  };
+
   useEffect(() => {
-    fetchTeamServers();
-  }, []);
+      // Initial fetch of logs to set statuses
+      fetchLogs();
+      const logInterval = setInterval(fetchLogs, 5000); // Fetch logs every 5 seconds
+  
+      return () => clearInterval(logInterval);
+    }, []);
+    // avoid ([teamServers]); as it will cause infinite loop
 
   const handleRefresh = () => {
-    fetchTeamServers();
+    fetchLogs();
   };
 
   const handleConnect = (server: TeamServer) => {
-    // Navigate to the connection page with query parameters
-    router.push(`/teamserver-client/connect?host=${server.host}&port=${server.port}&protocol=${server.protocol}`);
+    // Toast a message saying feature is not implemented
+    toast.info("Feature not implemented yet.", {
+      position: "top-right",
+      autoClose: 3000,
+    });
   };
 
   const handleToggleFavorite = async (server: TeamServer) => {
     try {
-      const response = await apiClient.patch(`/st_teamserver/update/${server.id}/`, {
-        is_favorite: !server.is_favorite,
+      const updatedServers = teamServers.map(s =>
+        s.name === server.name ? { ...s, is_favorite: !s.is_favorite } : s
+      );
+      setTeamServers(updatedServers);
+      toast.success(`TeamServer '${server.name}' favorite status updated.`, {
+        position: "top-right",
+        autoClose: 2000,
       });
-      if (response.status === 200) {
-        setTeamServers(prev => prev.map(s => s.id === server.id ? { ...s, is_favorite: response.data.is_favorite } : s));
-        toast.success(`TeamServer '${server.name}' updated successfully.`, {
-          position: "top-right",
-          autoClose: 3000,
-        });
-      } else {
-        toast.error("Failed to update TeamServer.", {
-          position: "top-right",
-          autoClose: 3000,
-        });
-      }
+      // Optionally, persist the favorite status to the backend if desired
     } catch (error: any) {
       console.error(error);
-      toast.error("An error occurred while updating TeamServer.", {
+      toast.error("Failed to update favorite status.", {
         position: "top-right",
         autoClose: 3000,
       });
@@ -111,96 +160,15 @@ export function TeamServerList() {
     });
   };
 
-  const handleRemove = async (serverId: number) => {
-    if (!confirm("Are you sure you want to remove this TeamServer?")) return;
-    try {
-      const response = await apiClient.delete(`/st_teamserver/delete/${serverId}/`);
-      if (response.status === 200) {
-        setTeamServers(prev => prev.filter(s => s.id !== serverId));
-        toast.success("TeamServer removed successfully.", {
-          position: "top-right",
-          autoClose: 3000,
-        });
-      } else {
-        toast.error("Failed to remove TeamServer.", {
-          position: "top-right",
-          autoClose: 3000,
-        });
-      }
-    } catch (error: any) {
-      console.error(error);
-      toast.error("An error occurred while removing TeamServer.", {
-        position: "top-right",
-        autoClose: 3000,
-      });
-    }
-  };
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
-    setNewServer(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value,
-    }));
-  };
-
-  const handleStartTeamServer = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const { host, password, port, secure, is_favorite } = newServer;
-
-    // Basic validation
-    if (!host || !password || !port) {
-      toast.error("Please fill in all required fields.", {
-        position: "top-right",
-        autoClose: 3000,
-      });
-      return;
-    }
-
-    try {
-      const response = await apiClient.post("/st_teamserver/start/", {
-        host,
-        password,
-        port: parseInt(port, 10),
-        secure,
-        is_favorite,
-      });
-
-      if (response.status === 200) {
-        toast.success("TeamServer started successfully.", {
-          position: "top-right",
-          autoClose: 3000,
-        });
-        setIsModalOpen(false);
-        setNewServer({
-          host: '',
-          password: '',
-          port: '',
-          secure: false,
-          is_favorite: false,
-        });
-        fetchTeamServers();
-      } else {
-        toast.error("Failed to start TeamServer.", {
-          position: "top-right",
-          autoClose: 3000,
-        });
-      }
-    } catch (error: any) {
-      console.error(error);
-      if (error.response && error.response.data) {
-        const detail = error.response.data.detail;
-        toast.error(`Error: ${detail}`, {
-          position: "top-right",
-          autoClose: 3000,
-        });
-      } else {
-        toast.error("An error occurred while starting TeamServer.", {
-          position: "top-right",
-          autoClose: 3000,
-        });
-      }
-    }
+  const handleRemove = (serverName: string) => {
+    // if (!confirm("Are you sure you want to remove this TeamServer?")) return;
+    const updatedServers = teamServers.filter(s => s.name !== serverName);
+    setTeamServers(updatedServers);
+    toast.success("TeamServer removed successfully.", {
+      position: "top-right",
+      autoClose: 3000,
+    });
+    // Optionally, inform the backend about the removal if necessary
   };
 
   return (
@@ -211,7 +179,8 @@ export function TeamServerList() {
           <Button variant="outline" size="icon" onClick={handleRefresh} disabled={isRefreshing}>
             <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
           </Button>
-          <Button variant="default" size="icon" onClick={() => setIsModalOpen(true)}>
+          {/* Plus button when click with route to /teamserver in a new tab*/}
+          <Button variant="default" size="icon" onClick={() => window.open('/teamserver', '_blank')}>
             <Plus className="h-4 w-4" />
           </Button>
         </div>
@@ -230,10 +199,14 @@ export function TeamServerList() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {teamServers.map((server) => (
-              <TableRow key={server.id}>
+            {teamServers.map((server, index) => (
+              <TableRow key={index}>
                 <TableCell>
-                  <Badge variant={server.status === 'online' ? 'default' : server.status === 'offline' ? 'destructive' : 'secondary'}>
+                  <Badge variant={
+                    server.status === 'online' ? 'default' :
+                      server.status === 'offline' ? 'destructive' :
+                        'secondary'
+                  }>
                     {server.status}
                   </Badge>
                 </TableCell>
@@ -241,7 +214,7 @@ export function TeamServerList() {
                 <TableCell>{server.host}</TableCell>
                 <TableCell>{server.port}</TableCell>
                 <TableCell>{server.protocol}</TableCell>
-                <TableCell>{new Date(server.last_seen).toLocaleString()}</TableCell>
+                <TableCell>{server.last_seen || 'N/A'}</TableCell>
                 <TableCell>
                   <div className="flex space-x-2">
                     <TooltipProvider>
@@ -283,7 +256,7 @@ export function TeamServerList() {
                     <TooltipProvider>
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Button variant="outline" size="icon" onClick={() => handleRemove(server.id)}>
+                          <Button variant="outline" size="icon" onClick={() => handleRemove(server.name)}>
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </TooltipTrigger>
@@ -304,83 +277,6 @@ export function TeamServerList() {
           </div>
         )}
       </CardContent>
-
-      {/* Modal for Adding a New TeamServer */}
-      <Modal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)}>
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle>Add New TeamServer</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleStartTeamServer} className="space-y-4">
-              {/* Since 'name' is removed, no input for 'name' */}
-              <div className="space-y-2">
-                <Label htmlFor="host">Host</Label>
-                <Input
-                  id="host"
-                  name="host"
-                  value={newServer.host}
-                  onChange={handleInputChange}
-                  placeholder="Enter host or IP"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  value={newServer.password}
-                  onChange={handleInputChange}
-                  placeholder="Enter password"
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="port">Port</Label>
-                <Input
-                  id="port"
-                  name="port"
-                  type="number"
-                  value={newServer.port}
-                  onChange={handleInputChange}
-                  placeholder="Enter port"
-                  required
-                />
-              </div>
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="secure"
-                  name="secure"
-                  checked={newServer.secure}
-                  onChange={handleInputChange}
-                  className="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                />
-                <Label htmlFor="secure">Secure (WSS)</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <input
-                  type="checkbox"
-                  id="is_favorite"
-                  name="is_favorite"
-                  checked={newServer.is_favorite}
-                  onChange={handleInputChange}
-                  className="h-4 w-4 text-yellow-400 border-gray-300 rounded focus:ring-yellow-400"
-                />
-                <Label htmlFor="is_favorite">Mark as Favorite</Label>
-              </div>
-              <div className="flex space-x-2">
-                <Button type="submit" className="w-full">Start TeamServer</Button>
-                <Button type="button" variant="ghost" className="w-full" onClick={() => setIsModalOpen(false)}>
-                  Cancel
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
-      </Modal>
     </Card>
   );
 }

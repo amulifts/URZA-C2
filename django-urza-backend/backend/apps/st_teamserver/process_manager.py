@@ -6,6 +6,9 @@ import platform
 import logging
 from django.conf import settings
 from pathlib import Path
+import re
+from typing import Optional
+import threading
 
 logger = logging.getLogger(__name__)
 
@@ -14,10 +17,7 @@ class TeamServerManager:
         self.process = None
         self.pid_file = Path(settings.BASE_DIR).parent / 'urza' / 'teamserver.pid'
 
-    def get_python_executable(self):
-        """
-        Returns the path to the Python executable in Urza's virtual environment.
-        """
+    def get_python_executable(self) -> str:
         project_root = os.path.abspath(os.path.join(settings.BASE_DIR, '..'))
         urza_env = os.path.join(project_root, 'urza', 'urzaenv')
 
@@ -31,10 +31,14 @@ class TeamServerManager:
 
         return python_executable
 
-    def start_teamserver(self, host: str, password: str, port: int, secure: bool):
-        """
-        Starts the TeamServer process with the given configuration.
-        """
+    def _log_stream(self, stream, log_level):
+        for line in iter(stream.readline, b''):
+            decoded_line = line.decode('utf-8').rstrip()
+            if decoded_line:
+                logger.log(log_level, decoded_line)
+        stream.close()
+
+    def start_teamserver(self, host: str, password: str, port: int, secure: bool) -> Optional[int]:
         python_executable = self.get_python_executable()
         working_directory = os.path.abspath(os.path.join(settings.BASE_DIR, '..', 'urza'))
         st_py_path = os.path.join(working_directory, 'main.py')
@@ -65,17 +69,13 @@ class TeamServerManager:
                     cwd=working_directory,
                     creationflags=subprocess.CREATE_NEW_CONSOLE,
                     shell=False,
+                    stdout=subprocess.PIPE,
+                    stderr=subprocess.PIPE,
                     env=os.environ.copy()
                 )
-                self.process = process  # Store the process object
-                logger.info(f"TeamServer started successfully with PID: {process.pid} in a new console window.")
-                # Write PID to file
-                with self.pid_file.open('w') as f:
-                    f.write(str(process.pid))
-                return process.pid
             else:
                 # Unix/Linux/MacOS: Use setsid to detach
-                self.process = subprocess.Popen(
+                process = subprocess.Popen(
                     command,
                     cwd=working_directory,
                     stdout=subprocess.PIPE,
@@ -84,20 +84,25 @@ class TeamServerManager:
                     preexec_fn=os.setsid,
                     env=os.environ.copy()
                 )
-                logger.info(f"TeamServer started successfully with PID: {self.process.pid}")
-                # Write PID to file
-                with self.pid_file.open('w') as f:
-                    f.write(str(self.process.pid))
-                return self.process.pid
+            self.process = process
+            logger.info(f"TeamServer started successfully with PID: {process.pid}")
+
+            # Start threads to log stdout and stderr
+            stdout_thread = threading.Thread(target=self._log_stream, args=(process.stdout, logging.INFO))
+            stderr_thread = threading.Thread(target=self._log_stream, args=(process.stderr, logging.ERROR))
+            stdout_thread.start()
+            stderr_thread.start()
+
+            # Write PID to file
+            with self.pid_file.open('w') as f:
+                f.write(str(process.pid))
+
+            return process.pid
         except Exception as e:
             logger.exception(f"Failed to start TeamServer: {e}")
             raise e
 
     def stop_teamserver(self):
-        """
-        Stops the TeamServer process if it's running.
-        """
-        # Check if PID file exists
         if self.pid_file.exists():
             try:
                 with self.pid_file.open('r') as f:
@@ -109,10 +114,13 @@ class TeamServerManager:
 
             try:
                 if os.name == 'nt':
-                    # Windows: Use taskkill to terminate the process tree
                     subprocess.check_call(['taskkill', '/F', '/T', '/PID', str(pid)])
+                    # once stopped clear the log file
+                    log_file_path = Path(settings.BASE_DIR).parent / 'urza' / 'urza' / 'core' / 'teamserver' / 'logs' / 'live_logs.json'
+                    if log_file_path.exists():
+                        with log_file_path.open('w') as f:
+                            f.write("")
                 else:
-                    # Unix/Linux/MacOS: Terminate the process group
                     os.killpg(os.getpgid(pid), subprocess.signal.SIGTERM)
                 logger.info("TeamServer stopped successfully.")
             except subprocess.CalledProcessError as cpe:
@@ -124,7 +132,6 @@ class TeamServerManager:
                 logger.exception(f"An unexpected error occurred while stopping TeamServer: {e}")
                 raise e
             finally:
-                # Remove the PID file
                 try:
                     self.pid_file.unlink()
                     logger.debug("PID file removed successfully.")
@@ -132,4 +139,4 @@ class TeamServerManager:
                     logger.warning(f"Failed to remove PID file: {e}")
         else:
             logger.warning("TeamServer PID file not found. It may already be stopped.")
-    
+
