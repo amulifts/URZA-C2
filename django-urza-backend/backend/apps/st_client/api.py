@@ -1,5 +1,3 @@
-# django-urza-backend/backend/apps/st_client/api.py
-
 from ninja import Router
 from ninja.errors import HttpError
 import logging
@@ -55,31 +53,32 @@ def connect(request, payload: ConnectRequest):
     except Exception as e:
         logger.exception(f"Error connecting to TeamServer: {e}")
         raise HttpError(500, "Internal Server Error: Unable to connect to TeamServer.")
+
+# Remove or comment out the disconnect endpoint as per user request
+# @st_client_router.post("/disconnect/", auth=auth)
+# def disconnect(request):
+#     """
+#     Disconnect the client from the TeamServer.
+#     Only Admin users can perform this action.
+#     """
+#     try:
+#         user = request.auth
+#         if not user:
+#             raise HttpError(401, "Unauthorized: Please log in.")
+        
+#         # Check if the user has a profile and is an Admin
+#         if not hasattr(user, 'profile') or user.profile.role != "Admin":
+#             raise HttpError(403, "Forbidden: Only Admins can disconnect clients.")
+        
+#         # Initialize the ProcessManager and stop the client
+#         process_manager = ProcessManager()
+#         process_manager.stop_client()
+        
+#         return {"detail": "Client disconnected successfully."}
     
-@st_client_router.post("/disconnect/", auth=auth)
-def disconnect(request):
-    """
-    Disconnect the client from the TeamServer.
-    Only Admin users can perform this action.
-    """
-    try:
-        user = request.auth
-        if not user:
-            raise HttpError(401, "Unauthorized: Please log in.")
-        
-        # Check if the user has a profile and is an Admin
-        if not hasattr(user, 'profile') or user.profile.role != "Admin":
-            raise HttpError(403, "Forbidden: Only Admins can disconnect clients.")
-        
-        # Initialize the ProcessManager and stop the client
-        process_manager = ProcessManager()
-        process_manager.stop_client()
-        
-        return {"detail": "Client disconnected successfully."}
-    
-    except HttpError as he:
-        logger.error(f"HttpError: {he.detail}")
-        raise he
-    except Exception as e:
-        logger.exception(f"Error disconnecting client: {e}")
-        raise HttpError(500, "Internal Server Error: Unable to disconnect client.")
+#     except HttpError as he:
+#         logger.error(f"HttpError: {he.detail}")
+#         raise he
+#     except Exception as e:
+#         logger.exception(f"Error disconnecting client: {e}")
+#         raise HttpError(500, "Internal Server Error: Unable to disconnect client.")

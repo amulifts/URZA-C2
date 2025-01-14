@@ -1,5 +1,3 @@
-# django-urza-backend/backend/apps/api.py
-
 from ninja import NinjaAPI
 from apps.users.api import user_router
 from apps.st_client.api import st_client_router

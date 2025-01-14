@@ -4,12 +4,12 @@ from ninja import Router
 from ninja.errors import HttpError
 import logging
 from .process_manager import TeamServerManager
-from .schemas import StartTeamServerSchema, TeamServerResponseSchema, LogEntrySchema, StopTeamServerResponseSchema
+from .schemas import StartTeamServerSchema, TeamServerResponseSchema, StopTeamServerResponseSchema, LogEntrySchema
 from apps.security import SimpleJWTBearer
-import json
-from pathlib import Path
 from typing import List, Optional
 from django.conf import settings
+from pathlib import Path
+import json
 
 logger = logging.getLogger(__name__)
 
@@ -65,6 +65,7 @@ def stop_teamserver(request):
     except Exception as e:
         logger.exception("Failed to stop TeamServer.")
         raise HttpError(500, "Internal Server Error: Unable to stop TeamServer.")
+    
 
 @router.get("/logs/", response=List[LogEntrySchema], auth=SimpleJWTBearer())
 def get_logs(request, limit: int = 100, level: Optional[str] = None):
@@ -106,4 +107,3 @@ def get_logs(request, limit: int = 100, level: Optional[str] = None):
     except Exception as e:
         logger.exception(f"Failed to read log file: {e}")
         return []
-

@@ -31,3 +31,4 @@ class LogEntrySchema(Schema):
     filename: str
     lineno: int
     funcName: str
+

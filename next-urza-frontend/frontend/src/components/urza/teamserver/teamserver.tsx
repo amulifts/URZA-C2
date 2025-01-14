@@ -195,7 +195,7 @@ export function TeamServer() {
             </div>
             {isRunning && (
               <div className="flex gap-4 text-sm">
-                <div>Connected Clients: 3</div>
+                <div>Connected Clients: 0</div>
                 <div>Active Port: {serverConfig.port}</div>
                 <div>Mode: {secureMode ? 'WSS' : 'WS'}</div>
               </div>
