@@ -34,6 +34,67 @@ from urza.core.teamserver.contexts import Listeners, Sessions, Modules, Stagers
 from urza.core.utils import create_self_signed_cert, get_cert_fingerprint, decode_auth_header, \
     CmdError, get_ips, get_data_folder, get_path_in_data_folder
 
+# ----- Added Logging Configuration Start -----
+
+class JSONFormatter(logging.Formatter):
+    """Custom formatter to output logs in JSON format."""
+    def format(self, record):
+        log_record = {
+            'time': self.formatTime(record, self.datefmt),
+            'level': record.levelname,
+            'message': record.getMessage(),
+            'name': record.name,
+            'filename': record.filename,
+            'lineno': record.lineno,
+            'funcName': record.funcName,
+        }
+        # Include exception information if present
+        if record.exc_info:
+            log_record['exception'] = self.formatException(record.exc_info)
+        return json.dumps(log_record)
+
+def setup_logging():
+    logger = logging.getLogger()
+    logger.setLevel(logging.DEBUG)  # Set root logger level
+
+    # Determine the directory where __main__.py resides
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    
+    # Set log directory to a 'logs' folder within the script's directory
+    log_dir = os.path.join(script_dir, 'logs')
+    os.makedirs(log_dir, exist_ok=True)
+
+    # Add a debug statement to confirm log directory path
+    logger.debug(f"Log directory set to: {log_dir}")
+
+    # Console Handler for live logging
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(logging.DEBUG)  # Set level for console
+    console_formatter = logging.Formatter(
+        '%(asctime)s - %(levelname)s - %(message)s'
+    )
+    console_handler.setFormatter(console_formatter)
+    logger.addHandler(console_handler)
+
+    # File Handler for JSON logs (append mode)
+    json_log_path = os.path.join(log_dir, 'live_logs.json')
+    try:
+        file_handler = logging.FileHandler(json_log_path, mode='a', encoding='utf-8')  # Changed to 'a'
+    except Exception as e:
+        logger.error(f"Failed to create log file at {json_log_path}: {e}")
+        raise
+    file_handler.setLevel(logging.DEBUG)  # Set level for file
+    file_formatter = JSONFormatter()
+    file_handler.setFormatter(file_formatter)
+    logger.addHandler(file_handler)
+    
+    # Add a debug statement to confirm file logging
+    logger.debug(f"Logging to file: {json_log_path}")
+    
+# Call the logging setup function
+setup_logging()
+
+# ----- Added Logging Configuration End -----
 
 class TeamServer:
     def __init__(self):

@@ -45,6 +45,7 @@ INSTALLED_APPS = [
     'apps.users',
     'apps.st_client',
     'apps.c2',
+    'apps.st_teamserver',
 
     # Third party apps
     'corsheaders',
