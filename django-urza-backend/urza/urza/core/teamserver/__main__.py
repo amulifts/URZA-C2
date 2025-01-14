@@ -79,7 +79,7 @@ def setup_logging():
     # File Handler for JSON logs (append mode)
     json_log_path = os.path.join(log_dir, 'live_logs.json')
     try:
-        file_handler = logging.FileHandler(json_log_path, mode='a', encoding='utf-8')  # Changed to 'a'
+        file_handler = logging.FileHandler(json_log_path, mode='w', encoding='utf-8')  # Changed to 'a'
     except Exception as e:
         logger.error(f"Failed to create log file at {json_log_path}: {e}")
         raise
@@ -90,7 +90,7 @@ def setup_logging():
     
     # Add a debug statement to confirm file logging
     logger.debug(f"Logging to file: {json_log_path}")
-    
+
 # Call the logging setup function
 setup_logging()
 

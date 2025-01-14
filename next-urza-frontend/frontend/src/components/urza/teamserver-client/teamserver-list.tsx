@@ -1,3 +1,5 @@
+// next-urza-frontend\frontend\src\components\urza\teamserver-client\teamserver-list.tsx
+
 "use client"
 
 import { useState, useEffect } from 'react';

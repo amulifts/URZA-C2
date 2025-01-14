@@ -2,7 +2,7 @@
 
 "use client"
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { Server, Eye, EyeOff, Copy, RefreshCw, AlertTriangle } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -44,6 +44,9 @@ export function TeamServer() {
   const [logs, setLogs] = useState<LogEntry[]>([])
   const [isFetchingLogs, setIsFetchingLogs] = useState(false)
   const [logLevel, setLogLevel] = useState<string | null>('ALL')
+
+  // New state to store connected clients
+  const [connectedClients, setConnectedClients] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     let interval: NodeJS.Timeout
@@ -92,6 +95,34 @@ export function TeamServer() {
       return () => clearInterval(logInterval)
     }
   }, [isRunning, logLevel])
+
+   // Process logs to determine connected clients
+  useEffect(() => {
+    if (!isRunning) {
+      setConnectedClients(new Set())
+      return
+    }
+
+    const clientSet = new Set<string>()
+
+    logs.forEach(log => {
+      const message = log.message.toLowerCase()
+
+      // Detect client connections
+      const connectMatch = log.message.match(/new client connected\s+([\w@.]+)/i)
+      if (connectMatch && connectMatch[1]) {
+        clientSet.add(connectMatch[1])
+      }
+
+      // Detect client disconnections
+      const disconnectMatch = log.message.match(/client disconnected\s+([\w@.]+)/i)
+      if (disconnectMatch && disconnectMatch[1]) {
+        clientSet.delete(disconnectMatch[1])
+      }
+    })
+
+    setConnectedClients(clientSet)
+  }, [logs, isRunning])
 
 
   const formatUptime = (seconds: number) => {
@@ -153,6 +184,7 @@ export function TeamServer() {
         setIsRunning(false);
         setUptime(0);
         setLogs([]); // Clear logs on stop
+        setConnectedClients(new Set()) // Reset connected clients
         toast.success(response.data.detail || "TeamServer stopped successfully.");
       }
     } catch (error: any) {
@@ -195,7 +227,7 @@ export function TeamServer() {
             </div>
             {isRunning && (
               <div className="flex gap-4 text-sm">
-                <div>Connected Clients: 0</div>
+                <div>Connected Clients: {connectedClients.size}</div> {/* Dynamic value */}
                 <div>Active Port: {serverConfig.port}</div>
                 <div>Mode: {secureMode ? 'WSS' : 'WS'}</div>
               </div>

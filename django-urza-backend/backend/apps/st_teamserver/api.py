@@ -10,6 +10,7 @@ from typing import List, Optional
 from django.conf import settings
 from pathlib import Path
 import json
+import re
 
 logger = logging.getLogger(__name__)
 
@@ -66,7 +67,6 @@ def stop_teamserver(request):
         logger.exception("Failed to stop TeamServer.")
         raise HttpError(500, "Internal Server Error: Unable to stop TeamServer.")
     
-
 @router.get("/logs/", response=List[LogEntrySchema], auth=SimpleJWTBearer())
 def get_logs(request, limit: int = 100, level: Optional[str] = None):
     """
