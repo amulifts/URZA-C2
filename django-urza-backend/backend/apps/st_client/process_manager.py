@@ -9,12 +9,15 @@ import win32gui
 import win32con
 import pyautogui
 import time
+from pathlib import Path
+
 
 logger = logging.getLogger(__name__)
 
 class ProcessManager:
     def __init__(self):
         self.process = None
+        self.pid_file = Path(settings.BASE_DIR).parent / 'urza' / 'client.pid'
 
     def get_python_executable(self):
         """
@@ -33,7 +36,7 @@ class ProcessManager:
 
         return python_executable
 
-    def start_client(self, connection_url: str):
+    def start_client(self, connection_url: str) -> int:
         """
         Starts the client process in a detached manner.
         """
@@ -41,14 +44,11 @@ class ProcessManager:
 
         working_directory = os.path.abspath(os.path.join(settings.BASE_DIR, '..', 'urza'))
         main_py_path = os.path.join(working_directory, 'main.py')
-        st_py_path = os.path.join(working_directory, 'st.py')
 
         if os.path.exists(main_py_path):
             entry_script = 'main.py'
-        elif os.path.exists(st_py_path):
-            entry_script = 'st.py'
         else:
-            raise FileNotFoundError(f"Neither 'main.py' nor 'st.py' found in {working_directory}")
+            raise FileNotFoundError(f"'main.py' not found in {working_directory}")
 
         command = [python_executable, entry_script, 'client', connection_url]
         logger.debug(f"Executing command: {' '.join(command)} in {working_directory}")
@@ -59,7 +59,8 @@ class ProcessManager:
                 cmd_command = [
                     'cmd.exe', '/c', 'start', '', python_executable, entry_script, 'client', connection_url
                 ]
-                subprocess.Popen(cmd_command, cwd=working_directory, shell=False, env=os.environ.copy())
+                process = subprocess.Popen(cmd_command, cwd=working_directory, shell=False, env=os.environ.copy())
+                pid = process.pid
                 logger.info("Client process started successfully in a new console window.")
             else:
                 # Unix/Linux/MacOS: Use `setsid` to detach the process
@@ -72,8 +73,16 @@ class ProcessManager:
                     preexec_fn=os.setsid,  # Detaches the process
                     env=os.environ.copy()
                 )
+                pid = self.process.pid
                 logger.info(f"Started client process with PID: {self.process.pid}")
-                return self.process.pid
+            
+            # Write PID to file
+            with self.pid_file.open('w') as f:
+                f.write(str(pid))
+            logger.debug(f"PID {pid} written to {self.pid_file}")
+
+            return pid
+        
         except Exception as e:
             logger.exception(f"Failed to start client process: {e}")
             raise e

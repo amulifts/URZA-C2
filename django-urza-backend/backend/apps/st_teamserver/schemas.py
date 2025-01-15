@@ -31,12 +31,4 @@ class LogEntrySchema(Schema):
     filename: str
     lineno: int
     funcName: str
-
-class TeamServerSchema(Schema):
-    name: str = Field(..., example="TeamServer1")
-    host: str = Field(..., example="0.0.0.0")
-    port: int = Field(..., example=6000)
-    protocol: str = Field(..., example="WS")  # 'WS' or 'WSS'
-    is_favorite: bool = Field(default=False, example=False)
-    status: str = Field(default="offline", example="offline")  # 'online', 'offline', 'unstable'
-    last_seen: Optional[str] = Field(None, example="2025-01-14 14:11:24")
+    
