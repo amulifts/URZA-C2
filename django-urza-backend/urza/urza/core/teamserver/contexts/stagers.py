@@ -1,4 +1,4 @@
-# urza\urza\core\teamserver\contexts\stagers.py
+# urza/core/teamserver/contexts/stagers.py
 
 import asyncio
 from copy import deepcopy
@@ -27,18 +27,11 @@ class Stagers(Loader):
                 return
         else:
             return self.loaded
-        
-    # -------------------------- 
-    # Accept user=None as a default param:
-    # -------------------------- 
-    def list(self, user=None):
-        """
-        Get or list available stagers
-        """
-        # Return the "loaded" stagers to the client.
+
+    def list(self):
         return {s.name: dict(s) for s in self.loaded}
 
-    def use(self, name: str, user=None):
+    def use(self, name: str):
         for s in self.loaded:
             if s.name.lower() == name.lower():
                 self.selected = deepcopy(s)
@@ -46,13 +39,13 @@ class Stagers(Loader):
 
         raise CmdError(f"No stager available named '{name.lower()}'")
 
-    def options(self, user=None):
+    def options(self):
         if not self.selected:
             raise CmdError("No stager selected")
 
         return self.selected.options
 
-    def set(self, name: str, value: str, user=None):
+    def set(self, name: str, value: str):
         if not self.selected:
             raise CmdError("No stager selected")
 
@@ -61,19 +54,13 @@ class Stagers(Loader):
         except KeyError:
             raise CmdError(f"Unknown option '{name}'")
 
-    def generate(self, listener_id, user=None):
-        """
-        Generates the selected stager, given a specific listener ID (instead of name).
-        """
+    def generate(self, listener_name):
         if not self.selected:
             raise CmdError("No stager selected")
 
         for l in self.teamserver.contexts['listeners'].listeners:
-            # if l['Name'] == listener_name:
-            if l.listener_id == listener_id:
+            if l['Name'] == listener_name:
                 guid, psk, generated_stager = self.selected.generate(l)
-
-                # Register the new guid with sessions so the teamserver knows about it
                 self.teamserver.contexts['sessions']._register(guid, psk)
 
                 return {
@@ -82,15 +69,13 @@ class Stagers(Loader):
                     "extension": self.selected.extension
                 }
 
-        # raise CmdError(f"No listener running with name '{listener_name}'")
-        raise CmdError(f"No listener running with ID '{listener_id}'")
+        raise CmdError(f"No listener running with name '{listener_name}'")
 
-    def get_selected(self, user=None):
+    def get_selected(self):
         if self.selected:
             return dict(self.selected)
-        return "No stager selected!"
 
-    def reload(self, user=None):
+    def reload(self):
         self.get_loadables()
         if self.selected:
             self.use(self.selected.name)

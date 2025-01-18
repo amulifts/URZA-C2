@@ -1,5 +1,3 @@
-# urza\urza\core\teamserver\comms\https.boo
-
 class Response:
     private Response as WebResponse
 

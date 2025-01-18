@@ -1,10 +1,10 @@
-# urza\urza\core\client\contexts\listeners.py
+# urza/core/client/contexts/listeners.py
 
 import asyncio
 import logging
-from terminaltables import SingleTable
+from terminaltables import AsciiTable
 from urza.core.client.utils import command, register_cli_commands
-from urza.core.utils import print_good, print_info, print_bad
+from urza.core.utils import print_good, print_info
 
 
 @register_cli_commands
@@ -42,7 +42,7 @@ class Listeners:
         self.selected = response.result
 
     @command
-    def list(self, name: str, running: bool, available: bool, response=None):
+    def list(self, name: str, running: bool, available: bool, response):
         """
         Get running/available listeners
 
@@ -57,45 +57,24 @@ class Listeners:
             -a, --available  List available listeners
         """
 
-        listeners = response.result # This is the dict the server returned
-        table_data = []
-        table_title = ""
-
-        if available:        
+        listeners = response.result
+        if available:
             table_title = "Available"
-            # Show only Name + Description
             table_data = [["Name", "Description"]]
-            for key, info in listeners.items():
-                table_data.append([
-                    info.get("Name", "?"),
-                    info.get("Description", "?")
-                ])
-                
-        elif running:
-            table_title = "Running"
-            table_data = [["ID", "Name", "URL", "CreatedBy"]]
-            for key, info in listeners.items():
-                # info is like {"ID": "...", "Name": "...", "URL": "...", "CreatedBy": "..."}
-                table_data.append([
-                    info.get("ID", "?"),
-                    info.get("Name", "?"),
-                    info.get("URL", "?"),
-                    info.get("CreatedBy", "?")
-                ])
+
+            for name,fields in listeners.items():
+                table_data.append([name, fields["description"]])
+
         else:
-            # If user typed just `list` with no flags, let's assume 'running'
-            table_title = "Running"
-            table_data = [["ID", "Name", "URL", "CreatedBy"]]
-            for key, info in listeners.items():
-                # info is like {"ID": "...", "Name": "...", "URL": "...", "CreatedBy": "..."}
+            table_title = 'Running'
+            table_data = [["Name", "URL"]]
+            for name,lst in listeners.items():
                 table_data.append([
-                    info.get("ID", "?"),
-                    info.get("Name", "?"),
-                    info.get("URL", "?"),
-                    info.get("CreatedBy", "?")
+                    name,
+                    f"{lst['name']}://{lst['options']['BindIP']['Value']}:{lst['options']['Port']['Value']}"
                 ])
 
-        table = SingleTable(table_data)
+        table = AsciiTable(table_data)
         table.title = table_title
         table.inner_row_border = True
         print(table.table)
@@ -115,7 +94,7 @@ class Listeners:
         for k, v in response.result.items():
             table_data.append([k, v["Required"], v["Value"], v["Description"]])
 
-        table = SingleTable(table_data, title="Listener Options")
+        table = AsciiTable(table_data, title="Listener Options")
         table.inner_row_border = True
         print(table.table)
 
@@ -130,31 +109,14 @@ class Listeners:
        print_good(f"Started listener \'{listener['options']['Name']['Value']}\'")
 
     @command
-    def stop(self, id: str, response=None):
+    def stop(self, response):
         """
-        Stop the specified listener by ID.
+        Stop the selected listener
 
-        Usage: stop <id> [-h]
-
-        Arguments:
-            id   The unique ID of the listener you want to stop.
-
-        Example:
-            stop AB1QMD2Q
+        Usage: stop <name> [-h]
         """
-        if not response or not response.result:
-            print_bad("No valid response from server.")
-            return
-
-        stopped_listener = response.result
-        
-        # Fix: Provide a fallback if "Name" is not in the dictionary
-        stopped_name = stopped_listener.get("Name", None)
-        if stopped_name:
-            print_info(f"Stopped listener '{stopped_name}' (ID: {id})")
-        else:
-            # If the server returns something else, we can do:
-            print_info(f"Stopped a listener with ID '{id}', no 'Name' in server response.")
+        listener = response.result
+        print_info(f"Stopped listener \'{listener['options']['Name']['Value']}\'")
 
     @command
     def set(self, name: str, value: str, response):

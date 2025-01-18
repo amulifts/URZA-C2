@@ -1,4 +1,0 @@
-# URZA/MANIFEST.in
-
-recursive-include urza/core/teamserver/data *
-recursive-include urza/core/teamserver/comms *.boo

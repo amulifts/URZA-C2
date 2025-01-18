@@ -1,3 +1,0 @@
-#!c:\project\urza\django-urza-backend\urza\urzaenv\scripts\python.exe
-from ldapdomaindump import convert
-convert.ldd2bloodhound()

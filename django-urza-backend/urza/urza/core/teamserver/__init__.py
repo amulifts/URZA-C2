@@ -1,4 +1,4 @@
-# urza\urza\core\teamserver\__init__.py
+# urza/core/teamserver/__init__.py
 
 import logging
 import multiprocessing
@@ -14,11 +14,7 @@ logging.basicConfig(
 logging.getLogger('websockets.server').setLevel(logging.ERROR)
 logging.getLogger('websockets.protocol').setLevel(logging.ERROR)
 
-# multiprocessing.set_start_method("fork")
-
-# Use 'spawn' start method for Windows compatibility
-if multiprocessing.get_start_method() != "spawn":
-    multiprocessing.set_start_method("spawn", force=True)
+multiprocessing.set_start_method("fork")
 
 ipc_server = IPCServer()
 ipc_server.start()

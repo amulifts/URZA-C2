@@ -1,4 +1,4 @@
-# urza\urza\core\teamserver\comms\utils.py
+# urza/core/teamserver/comms/utils.py
 
 import logging
 import os

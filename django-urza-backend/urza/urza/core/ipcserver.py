@@ -1,4 +1,4 @@
-# urza\urza\core\ipcserver.py
+# urza/core/ipcserver.py
 
 import logging
 import functools

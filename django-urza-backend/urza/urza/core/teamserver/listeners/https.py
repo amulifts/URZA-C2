@@ -1,4 +1,4 @@
-# urza\urza\core\teamserver\listeners\https.py
+# urza/core/teamserver/listeners/https.py
 
 import sys
 import asyncio
@@ -13,7 +13,6 @@ from quart import Quart, Blueprint, request, Response
 #from quart.logging import default_handler, serving_handler
 from hypercorn import Config
 from hypercorn.asyncio import serve
-import traceback
 
 
 class STListener(Listener):
@@ -22,11 +21,6 @@ class STListener(Listener):
         self.name = 'https'
         self.author = '@byt3bl33d3r'
         self.description = 'HTTPS listener'
-
-        # For the async event loop
-        self.loop = None
-        self.shutdown_event = None
-        self.serve_task = None
 
         self.options = {
             # format:
@@ -80,94 +74,45 @@ class STListener(Listener):
         }
 
     def run(self):
+        if (self['Key'] == '~/.st/key.pem') and (self['Cert'] == '~/.st/cert.pem'):
+            if not os.path.exists(get_path_in_data_folder("key.pem")) or not os.path.exists(get_path_in_data_folder("cert.pem")) or self['RegenCert']:
+                create_self_signed_cert()
+
+        config = Config()
+        config.ciphers = 'ALL'
+        config.accesslog = os.path.join(get_path_in_data_folder("logs"), "access.log")
+        config.bind = f"{self['BindIP']}:{self['Port']}"
+        config.certfile = os.path.expanduser(self['Cert'])
+        config.keyfile= os.path.expanduser(self['Key'])
+        config.include_server_header = False # This doesn't seem to do anything?
+        config.use_reloader = False
+        config.debug = False
+
         """
-        Initializes and starts the Quart (Hypercorn) server in its own event loop/thread.
+        While we could use the standard decorators to register these routes, 
+        using add_url_rule() allows us to create diffrent endpoint names
+        programmatically and pass the classes self object to the routes
         """
-        try:
-            # If cert/key not present or user wants to regenerate, do that:
-            if (self['Key'] == '~/.st/key.pem') and (self['Cert'] == '~/.st/cert.pem'):
-                if (
-                    not os.path.exists(get_path_in_data_folder("key.pem")) or 
-                    not os.path.exists(get_path_in_data_folder("cert.pem")) or 
-                    self['RegenCert']
-                ):
-                    create_self_signed_cert()
-            
-            self.loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(self.loop)
 
-            # The event that will cause Hypercorn to shut down
-            self.shutdown_event = asyncio.Event()
+        http_blueprint = Blueprint(__name__, 'https')
+        http_blueprint.before_request(self.check_if_naughty)
+        #http_blueprint.after_request(self.make_normal)
 
-            config = Config()
-            config.ciphers = 'ALL'
-            config.accesslog = os.path.join(get_path_in_data_folder("logs"), "access.log")
-            config.bind = f"{self['BindIP']}:{self['Port']}"
-            config.certfile = os.path.expanduser(self['Cert'])
-            config.keyfile= os.path.expanduser(self['Key'])
-            config.include_server_header = False # This doesn't seem to do anything?
-            config.use_reloader = False
-            config.debug = False
+        http_blueprint.add_url_rule('/<uuid:GUID>', 'key_exchange', self.key_exchange, methods=['POST'])
+        http_blueprint.add_url_rule('/<uuid:GUID>', 'stage', self.stage, methods=['GET'])
+        http_blueprint.add_url_rule('/<uuid:GUID>/jobs', 'jobs', self.jobs, methods=['GET'])
+        http_blueprint.add_url_rule('/<uuid:GUID>/jobs/<job_id>', 'job_result', self.job_result, methods=['POST'])
 
-            # Make Hypercorn stop if self.shutdown_event is set:
-            config.shutdown_trigger = self.shutdown_event.wait
+        # Add a catch all route
+        http_blueprint.add_url_rule('/', 'unknown_path', self.unknown_path, defaults={'path': ''})
+        http_blueprint.add_url_rule('/<path:path>', 'unknown_path', self.unknown_path, methods=['GET', 'POST'])
 
-            http_blueprint = Blueprint(__name__, 'https')
-            http_blueprint.before_request(self.check_if_naughty)
+        #logging.getLogger('quart.app').setLevel(logging.DEBUG if state.args['--debug'] else logging.ERROR)
+        #logging.getLogger('quart.serving').setLevel(logging.DEBUG if state.args['--debug'] else logging.ERROR)
 
-            # Setup routes
-            http_blueprint.add_url_rule('/<uuid:GUID>', 'key_exchange', self.key_exchange, methods=['POST'])
-            http_blueprint.add_url_rule('/<uuid:GUID>', 'stage', self.stage, methods=['GET'])
-            http_blueprint.add_url_rule('/<uuid:GUID>/jobs', 'jobs', self.jobs, methods=['GET'])
-            http_blueprint.add_url_rule('/<uuid:GUID>/jobs/<job_id>', 'job_result', self.job_result, methods=['POST'])
-
-            # Add a catch all route
-            http_blueprint.add_url_rule('/', 'unknown_path', self.unknown_path, defaults={'path': ''})
-            http_blueprint.add_url_rule('/<path:path>', 'unknown_path', self.unknown_path, methods=['GET', 'POST'])
-
-            #logging.getLogger('quart.app').setLevel(logging.DEBUG if state.args['--debug'] else logging.ERROR)
-            #logging.getLogger('quart.serving').setLevel(logging.DEBUG if state.args['--debug'] else logging.ERROR)
-
-            self.app = Quart(__name__)
-            self.app.register_blueprint(http_blueprint)
-
-            self.serve_task = self.loop.create_task(serve(self.app, config))
-            
-            # Now start the loop
-            self.loop.run_until_complete(self.serve_task)
-            self.loop.run_until_complete(self.loop.shutdown_asyncgens())
-            self.loop.close()
-
-        except Exception as e:
-            logging.error(f"Error running HTTPS listener: {e}")
-            traceback.print_exc()
-    
-    def stop(self):
-        """
-        Gracefully stops the Hypercorn server by setting shutdown_event.
-        """
-        # if self.loop and self.shutdown_event and not self.shutdown_event.is_set():
-        #     logging.debug("Stopping HTTPS listener via shutdown_event.")
-        #     self.loop.call_soon_threadsafe(self.shutdown_event.set)
-        # else:
-        #     logging.debug("HTTPS listener was never started or is already stopped.")
-
-        if self.loop is not None and self.shutdown_event is not None:
-            logging.debug("Stopping HTTPS listener via shutdown_event...")
-
-            # 1) Cancel the serve() task if you stored it
-            if self.serve_task is not None and not self.serve_task.done():
-                logging.debug("Cancelling the Hypercorn serve_task...")
-                self.serve_task.cancel()
-
-            # 2) Trigger the shutdown event so the server exits
-            def do_shutdown():
-                self.shutdown_event.set()
-
-            # Because we're in a different thread's event loop, we call_soon_threadsafe:
-            self.loop.call_soon_threadsafe(do_shutdown)
-        else:
-            logging.debug("HTTPS listener was never started or already stopped.")
+        self.app = Quart(__name__)
+        self.app.register_blueprint(http_blueprint)
+        asyncio.run(serve(self.app, config))
 
     async def check_if_naughty(self):
         try:

@@ -1,4 +1,4 @@
-# urza\urza\core\client\contexts\teamservers.py
+# urza/core/client/contexts/teamservers.py
 
 import asyncio
 import logging
@@ -7,7 +7,7 @@ from urza.core.client.connection import ClientConnection
 #from core.client.stats import ClientSessionStats
 from urza.core.utils import gen_random_string, print_info, print_bad
 from urza.core.client.utils import command, register_cli_commands
-from terminaltables import SingleTable
+from terminaltables import AsciiTable
 
 
 @register_cli_commands
@@ -133,6 +133,6 @@ class TeamServers:
             for conn in self.connections:
                 table_data.append([f"*{conn.alias}" if self.selected == conn else conn.alias, str(conn)])
 
-            table = SingleTable(table_data, title='Teamservers')
+            table = AsciiTable(table_data, title='Teamservers')
             table.inner_row_border = True
             print(table.table)

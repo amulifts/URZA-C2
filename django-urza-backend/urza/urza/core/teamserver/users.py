@@ -1,4 +1,4 @@
-# urza\urza\core\teamserver\users.py
+# urza/core/teamserver/users.py
 
 import asyncio
 import json
@@ -52,7 +52,9 @@ class Users:
             'data': data
         }
         try:
-            await asyncio.wait([user.send(message) for user in self.users if user not in exclude])
+            tasks = [asyncio.create_task(user.send(message)) for user in self.users if user not in exclude]
+            if tasks:
+                await asyncio.wait(tasks)
         except ValueError:
             logging.warning(f"Attempted to send broadcast event to {len(self.users)} user(s) but they were also part of the exclude list: {exclude}")
 

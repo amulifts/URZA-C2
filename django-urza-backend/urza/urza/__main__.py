@@ -1,4 +1,6 @@
-# urza\urza\__main__.py
+# urza/__main__.py
+
+#! /usr/bin/env python3
 
 """
 Usage: st [-h] [-v] (client|teamserver) [<args>...]
@@ -10,6 +12,7 @@ options:
 
 from docopt import docopt
 from urza import VERSION
+
 
 def run():
     args = docopt(__doc__, version=VERSION, options_first=True)

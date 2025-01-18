@@ -1,4 +1,4 @@
-# urza\urza\core\utils.py
+# urza/core/utils.py
 
 import logging
 import datetime
@@ -191,17 +191,18 @@ def get_cert_fingerprint(cert_path):
         return cert.fingerprint(hashes.SHA256())
 
 def print_good(msg):
-    print(f"{colored('[+]', 'green')} {msg}")
+    print(f"[+] {msg}")
 
 def print_bad(msg):
-    print(f"{colored('[-]', 'red')} {msg}")
+    print(f"[-] {msg}")
 
 def print_info(msg):
-    print(f"{colored('[*]', 'blue')} {msg}")
+    print(f"[*] {msg}")
 
 def print_banner(codename, version):
     version = f"""
                                Codename : {colored(codename, "yellow")}
                                Version  : {colored(version, "yellow")}
     """
+    
     print(version)

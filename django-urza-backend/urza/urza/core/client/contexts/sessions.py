@@ -1,11 +1,10 @@
-# urza\urza\core\client\contexts\sessions.py
+# urza/core/client/contexts/sessions.py
 
 import asyncio
 import logging
 from urza.core.utils import print_good, print_info, print_bad
 from urza.core.client.utils import command, register_cli_commands
-from terminaltables import SingleTable
-from termcolor import colored
+from terminaltables import AsciiTable
 from time import gmtime, strftime
 
 @register_cli_commands
@@ -50,9 +49,9 @@ class Sessions:
                     username = 'N/A'
 
                 if (gmtime(session['lastcheckin'])[5] > int(session['info']['Sleep']/1000)):
-                    timestamp = colored(strftime("%Hh %Mm %Ss", gmtime(session['lastcheckin'])), "red", attrs=['bold'])
+                    timestamp = strftime("%Hh %Mm %Ss", gmtime(session['lastcheckin']))
                 else:
-                    timestamp = colored(strftime("%Hh %Mm %Ss", gmtime(session['lastcheckin'])), "green", attrs=['bold'])
+                    timestamp = strftime("%Hh %Mm %Ss", gmtime(session['lastcheckin']))
 
                 table_data.append([
                     guid,
@@ -61,7 +60,7 @@ class Sessions:
                     timestamp
                 ])
 
-        table = SingleTable(table_data, title="Sessions")
+        table = AsciiTable(table_data, title="Sessions")
         table.inner_row_border = True
         print(table.table)
 
@@ -77,7 +76,7 @@ class Sessions:
         for k,v in response.result['info'].items():
             table_data.append([k, v])
 
-        table = SingleTable(table_data, title="Session Info")
+        table = AsciiTable(table_data, title="Session Info")
         table.inner_row_border = True
         print(table.table)
 

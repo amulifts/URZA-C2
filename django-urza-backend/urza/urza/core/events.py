@@ -1,4 +1,4 @@
-# urza\urza\core\events.py
+# urza/core/events.py
 
 import enum
 

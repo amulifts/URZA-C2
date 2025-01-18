@@ -4,7 +4,7 @@ from ninja import Router
 from ninja.errors import HttpError
 import logging
 from .schemas import ConnectRequest, PidResponse
-from .process_manager import ProcessManager
+from .process_manager import ClientManager
 from rest_framework_simplejwt.authentication import JWTAuthentication
 from ninja.security import HttpBearer
 
@@ -43,9 +43,9 @@ def connect(request, payload: ConnectRequest):
         connection_url = str(payload.connection_url)
         logger.info(f"User {user.username} is initiating connection to {connection_url}")
         
-        # Initialize the ProcessManager and start the client
-        process_manager = ProcessManager()
-        pid = process_manager.start_client(connection_url)
+        # Initialize the ClientManager and start the client
+        client_manager = ClientManager()
+        pid = client_manager.start_client(connection_url)
         
         return {"detail": "Connection initiated successfully.", "pid": pid}
     

@@ -1,4 +1,4 @@
-# urza\urza\core\teamserver\crypto.py
+# urza/core/teamserver/crypto.py
 
 import hmac
 import logging

@@ -1,4 +1,4 @@
-# urza\urza\core\client\utils.py
+# urza/core/client/utils.py
 
 from functools import wraps
 from typing import get_type_hints, List

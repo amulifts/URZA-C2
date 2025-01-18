@@ -1,4 +1,4 @@
-# urza\urza\core\client\connection.py
+# urza/core/client/connection.py
 
 import asyncio
 import websockets
@@ -23,14 +23,13 @@ from urza.core.client.contexts.stagers import Stagers
 from prompt_toolkit.patch_stdout import patch_stdout
 from prompt_toolkit.application import run_in_terminal
 
-
 class ClientConnection:
     def __init__(self, url: str):
         self.alias = f"TS-{gen_random_string(5)}"
         self.url = urlparse(url)
         self.stats = ClientConnectionStats()
         self.event_handlers = ClientEventHandlers(self)
-        self.msg_queue =  asyncio.Queue(maxsize=1)
+        self.msg_queue = asyncio.Queue(maxsize=1)
         self.contexts = [
             Listeners(),
             Sessions(),
@@ -106,13 +105,18 @@ class ClientConnection:
                     self.stats.CONNECTED = True
                     self.ws = ws
 
-                    await asyncio.wait([
+                    await asyncio.gather(
                         self.data_handler(),
                         self.heartbeat()
-                    ])
+                    )
             except ConnectionRefusedError as e:
                 logging.error(e)
                 logging.error('Error connecting to team server: connection was refused')
+                self.stats.CONNECTED = False
+
+            except websockets.exceptions.InvalidStatusCode as e:
+                logging.error(e)
+                logging.error('Invalid status code received during connection.')
                 self.stats.CONNECTED = False
 
             await asyncio.sleep(5)
@@ -129,20 +133,21 @@ class ClientConnection:
             elif data['type'] == 'event':
                 logging.debug(f'Got event from server: {data}')
                 try:
-                    event_handler = functools.partial(
-                        getattr(self.event_handlers, data['name'].lower()),
-                        data=data['data']
-                    )
-                    with patch_stdout():
-                        run_in_terminal(event_handler) #run_in_executor=True ?
-                except AttributeError:
-                    logging.error(f"Got event of unknown type '{data['name']}'")
+                    handler = getattr(self.event_handlers, data['name'].lower(), None)
+                    if handler:
+                        # Ensure the handler is a synchronous function
+                        with patch_stdout():
+                            run_in_terminal(lambda: handler(data=data['data']))
+                    else:
+                        logging.error(f"Got event of unknown type '{data['name']}'")
+                except Exception as e:
+                    logging.error(f"Error handling event '{data['name']}': {e}")
 
         self.stats.CONNECTED = False
         logging.debug("data_handler has stopped")
 
     async def heartbeat(self):
-        while self.ws.open: #while True?
+        while self.ws and self.ws.open:
             try:
                 pong_waiter = await self.ws.ping()
                 await asyncio.wait_for(pong_waiter, timeout=10)

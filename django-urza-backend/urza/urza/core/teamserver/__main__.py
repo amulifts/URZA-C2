@@ -1,4 +1,6 @@
-# urza\urza\core\teamserver\__main__.py
+# urza/core/teamserver/__main__.py
+
+#!/usr/bin/env python3
 
 """
 Usage: teamserver [-h] [--port <PORT>] [--insecure] <host> <password>
@@ -19,7 +21,6 @@ import websockets
 import signal
 import http
 import functools
-import platform
 import hmac
 import traceback
 from termcolor import colored
@@ -96,6 +97,7 @@ setup_logging()
 
 # ----- Added Logging Configuration End -----
 
+
 class TeamServer:
     def __init__(self):
         self.users = Users()
@@ -122,9 +124,7 @@ class TeamServer:
         else:
             try:
                 cmd_handler = getattr(ctx, message['cmd'])
-                # 1) Pass the 'user' into the context method call
-                result = cmd_handler(user=user, **message['args'])  # <--- ADDED user=user
-                # result = cmd_handler(**message['args'])
+                result = cmd_handler(**message['args'])
                 status = 'success'
             except AttributeError:
                 traceback.print_exc()
@@ -256,21 +256,8 @@ def start(args):
     teamserver_digest = hmac.new(args['<password>'].encode(), msg=b'urza', digestmod=sha512).hexdigest()
 
     stop = asyncio.Future()
-    
-    if platform.system() != "Windows":
-        # Add signal handlers for Unix-like systems
-        for sig in (signal.SIGINT, signal.SIGTERM):
-            loop.add_signal_handler(sig, stop.set_result, None)
-    else:
-        # Alternative for Windows: Use a background task to listen for termination
-        async def windows_signal_handler():
-            try:
-                while not stop.done():
-                    await asyncio.sleep(1)
-            except asyncio.CancelledError:
-                pass
-
-        asyncio.ensure_future(windows_signal_handler())
+    for sig in (signal.SIGINT, signal.SIGTERM):
+        loop.add_signal_handler(sig, stop.set_result, None)
 
     if args['--insecure']:
         logging.warning('SECURITY WARNING: --insecure flag passed, communication between client and server will be in cleartext!')

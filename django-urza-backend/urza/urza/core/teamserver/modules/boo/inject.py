@@ -11,7 +11,7 @@ class STModule(Module):
     def __init__(self):
         self.name = 'boo/inject'
         self.language = 'boo'
-        self.description = 'Injects a urza session into the specified process using shellcode'
+        self.description = 'Injects a URZA session into the specified process using shellcode'
         self.run_in_thread = False
         self.author = '@byt3bl33d3r'
         self.references = []

@@ -1,4 +1,4 @@
-# urza\urza\core\client\__main__.py
+# urza/core/client/__main__.py
 
 """
 Usage: client [-h] [-d] [--resource-file <FILE>] [<URL>...]

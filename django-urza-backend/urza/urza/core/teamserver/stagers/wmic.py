@@ -1,5 +1,3 @@
-# urza\urza\core\teamserver\stagers\wmic.py
-
 import uuid
 from urza.core.teamserver.crypto import gen_stager_psk
 from urza.core.teamserver.stager import Stager

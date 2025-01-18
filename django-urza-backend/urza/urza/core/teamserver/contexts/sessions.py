@@ -1,10 +1,9 @@
-# urza\urza\core\teamserver\contexts\sessions.py
+# urza/core/teamserver/contexts/sessions.py
 
 import os
 import logging
 import asyncio
 import uuid
-from termcolor import colored
 from urza.core.events import Events
 from urza.core.utils import gen_random_string, CmdError
 from urza.core.teamserver import ipc_server
@@ -63,7 +62,7 @@ class Sessions:
                         logging.info("Automatic registration successful")
                         return self.get_session(guid)
                 logging.error(f"Could not automatically register session {guid}, PSK not in database")
-                logging.warning(colored("This could be an orphaned session or somebody could be messing with the teamserver!", "red"))
+                logging.warning("This could be an orphaned session or somebody could be messing with the teamserver!")
 
             raise SessionNotFoundError(f"Session with guid {guid} was not found")
 
@@ -197,16 +196,16 @@ class Sessions:
             loop=self.teamserver.loop
         )
 
-    def list(self, user=None):
+    def list(self):
         return {s.name: dict(s) for s in self.sessions if s.info}
 
-    def info(self, guid, user=None):
+    def info(self, guid):
         try:
             return dict(self.get_session(guid))
         except SessionNotFoundError:
             raise CmdError(f"No session named: {guid}")
 
-    def kill(self, guid, user=None):
+    def kill(self, guid):
         try:
             session = self.get_session(guid)
             session.jobs.add(Job(command=('Exit', [])))
@@ -214,14 +213,14 @@ class Sessions:
         except SessionNotFoundError:
             raise CmdError(f"No session named: {guid}")
 
-    def sleep(self, guid, interval, user=None):
+    def sleep(self, guid, interval):
         try:
             session = self.get_session(guid)
             session.jobs.add(Job(command=('Sleep', [int(interval)])))
         except SessionNotFoundError:
             raise CmdError(f"No session named: {guid}")
 
-    def jitter(self, guid, max, min, user=None):
+    def jitter(self, guid, max, min):
         try:
             session = self.get_session(guid)
             if min:
@@ -231,21 +230,21 @@ class Sessions:
         except SessionNotFoundError:
             raise CmdError(f"No session named: {guid}")
 
-    def checkin(self, guid, user=None):
+    def checkin(self, guid):
         try:
             session = self.get_session(guid)
             session.jobs.add(Job(command=('CheckIn', [])))
         except SessionNotFoundError:
             raise CmdError(f"No session named: {guid}")
 
-    def rename(self, guid, name, user=None):
+    def rename(self, guid, name):
         try:
             session = self.get_session(guid)
             session.name = name
         except SessionNotFoundError:
             raise CmdError(f"No session with guid: {guid}")
 
-    def unregister(self, guid, user=None):
+    def unregister(self, guid):
         self.guid_is_valid(guid)
 
         if guid in self.sessions:
@@ -258,14 +257,14 @@ class Sessions:
 
         return {"guid": str(guid)}
 
-    def getpsk(self, guid, user=None):
+    def getpsk(self, guid):
         self.guid_is_valid(guid)
 
         with STDatabase() as db:
             psk = db.get_session_psk(guid)
             return {"psk": psk}
 
-    def purge(self, user=None):
+    def purge(self):
         counter = 0
         s = {s.guid: dict(s) for s in self.sessions if s.info}
         for guid, session in s.items():

@@ -1,4 +1,4 @@
-# urza\urza\core\client\event_handlers.py
+# urza/core/client/event_handlers.py
 
 import logging
 from urza.core.utils import print_bad, print_good, print_info
@@ -32,13 +32,3 @@ class ClientEventHandlers:
     def job_result(self, data):
         print_info(f"[{self.connection.alias}] {data['session']} returned job result (id: {data['id']})")
         print(data['output'])
-
-    # --------------------------------------
-    # NEW METHOD FOR NEW_LISTENER EVENT
-    def new_listener(self, data):
-        """
-        Display a broadcast about a newly started listener
-        data: typically a string like "aman started listener 'http'"
-        """
-        print_good(f"[{self.connection.alias}] (New Listener) {data}")
-    # --------------------------------------

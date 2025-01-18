@@ -1,4 +1,4 @@
-# urza\urza\core\teamserver\job.py
+# urza/core/teamserver/job.py
 
 import json
 from urza.core.utils import gen_random_string

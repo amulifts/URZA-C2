@@ -1,4 +1,4 @@
-# urza\urza\core\client\cmdloop.py
+# urza/core/client/cmdloop.py
 
 import logging
 import functools
@@ -6,7 +6,7 @@ import shlex
 import asyncio
 import shutil
 from docopt import docopt, DocoptExit
-from terminaltables import SingleTable
+from terminaltables import AsciiTable
 from prompt_toolkit import PromptSession
 from prompt_toolkit.completion import Completer, Completion, PathCompleter
 from prompt_toolkit.patch_stdout import patch_stdout
@@ -19,7 +19,6 @@ from prompt_toolkit.document import Document
 from urza.core.client.contexts.teamservers import TeamServers
 from urza.core.client.utils import command, register_cli_commands
 from urza.core.utils import print_bad, print_good, print_info
-from urllib.parse import urlparse
 
 example_style = Style.from_dict({
     'rprompt': 'bg:#ff0066 #ffffff',
@@ -131,42 +130,22 @@ class STShell:
         self.args = args
         self.current_context = self
 
-        # -------------------------------------------
-        # 1) PARSE USERNAME FROM THE FIRST URL (IF ANY)
-        self.username = "anonymous"
-        if args['<URL>'] and len(args['<URL>']) > 0:
-            parsed_url = urlparse(args['<URL>'][0])
-            if parsed_url.username:
-                self.username = parsed_url.username
-        # -------------------------------------------
-
         self.teamservers = TeamServers(args['<URL>'])
 
         self.completer = STCompleter(self)
         self.prompt_session = PromptSession(
-            # HTML(
-            #     ("[<ansiyellow>"
-            #      f"{len(self.teamservers.connections)}"
-            #      "</ansiyellow>] ST ≫ ")
-            # ),
-            # bottom_toolbar=functools.partial(bottom_toolbar, ts=self.teamservers),
-            # completer=self.completer,
-            # complete_in_thread=True,
-            # complete_while_typing=True,
-            # auto_suggest=AutoSuggestFromHistory(),
-            # #rprompt=get_rprompt(False),
-            # #style=example_style,
-            # search_ignore_case=True
-            
-            # 2) ADD THE USERNAME TO THE PROMPT
             HTML(
-                f"[<ansiyellow>{len(self.teamservers.connections)}</ansiyellow>] ST({self.username}) ≫ "
+                ("[<ansiyellow>"
+                 f"{len(self.teamservers.connections)}"
+                 "</ansiyellow>] ST ≫ ")
             ),
             bottom_toolbar=functools.partial(bottom_toolbar, ts=self.teamservers),
             completer=self.completer,
             complete_in_thread=True,
             complete_while_typing=True,
             auto_suggest=AutoSuggestFromHistory(),
+            #rprompt=get_rprompt(False),
+            #style=example_style,
             search_ignore_case=True
         )
 
@@ -195,42 +174,24 @@ class STShell:
             except IndexError:
                 return False, args
 
-    # async def update_prompt(self, ctx):
-    #     self.prompt_session.message = HTML(
-    #         ("[<ansiyellow>"
-    #          f"{len(self.teamservers.connections)}"
-    #          f"</ansiyellow>] ST (<ansired>{ctx.name}</ansired>){' ≫ ' if not ctx.prompt else ctx.prompt + ' ≫ ' }")
-    #     )
-
     async def update_prompt(self, ctx):
-        """
-        Dynamically update the CLI prompt, so if the user
-        changes contexts, the prompt changes.
-        """
         self.prompt_session.message = HTML(
             ("[<ansiyellow>"
-                f"{len(self.teamservers.connections)}"
-                f"</ansiyellow>] ST({self.username}) (<ansired>{ctx.name}</ansired>){' ≫ ' if not ctx.prompt else ctx.prompt + ' ≫ ' }")
+             f"{len(self.teamservers.connections)}"
+             f"</ansiyellow>] ST (<ansired>{ctx.name}</ansired>){' ≫ ' if not ctx.prompt else ctx.prompt + ' ≫ ' }")
         )
 
     async def switched_context(self, text):
         for ctx in self.get_context():
             if text.lower() == ctx.name:
                 if ctx._remote is True:
-                    # The client tries to run something on the server, e.g., docopt with no subcommand
-                    # and 'response.result' might be a string or None.
                     try:
                         response = await self.teamservers.send(
                                 ctx=ctx.name,
                                 cmd="get_selected"
                             )
-                        # if response.result:
-                        #     ctx.selected = response.result  # <--- This will break if 'result' is string
-                        # Only assign if we got a dictionary
-                        if response.result and isinstance(response.result, dict):
+                        if response.result:
                             ctx.selected = response.result
-                        else:
-                            logging.debug(f"Got a non-dict for selected context: {response.result}")
                     except AttributeError:
                         break
 
@@ -344,7 +305,7 @@ class STShell:
             for menu in self.get_context():
                 table_data.append([menu.name, menu.description])
 
-        table = SingleTable(table_data)
+        table = AsciiTable(table_data)
         print(table.table)
 
     @command

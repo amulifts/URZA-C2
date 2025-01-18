@@ -1,4 +1,4 @@
-# urza\urza\core\client\server_response.py
+# urza/core/client/server_response.py
 
 import logging
 

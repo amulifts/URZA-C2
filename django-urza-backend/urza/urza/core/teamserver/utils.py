@@ -1,4 +1,4 @@
-# urza\urza\core\teamserver\utils.py
+# urza/core/teamserver/utils.py
 
 import functools
 import zlib

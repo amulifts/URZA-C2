@@ -1,4 +1,4 @@
-# urza\urza\core\teamserver\db.py
+# urza/core/teamserver/db.py
 
 import aiosqlite
 import sqlite3

@@ -1,4 +1,4 @@
-# urza\urza\core\teamserver\contexts\modules.py
+# urza/core/teamserver/contexts/modules.py
 
 import types
 import asyncio
@@ -20,10 +20,10 @@ class Modules(Loader):
         self.selected = None
         super().__init__(type="module", paths=[get_path_in_package("core/teamserver/modules/boo/")])
 
-    def list(self, name: str = None, user=None):
+    def list(self, name: str = None):
         return {m.name: m.description for m in self.loaded}
 
-    def use(self, name: str, user=None):
+    def use(self, name: str):
         for m in self.loaded:
             if m.name.lower() == name.lower():
                 #self.selected = deepcopy(m)
@@ -32,17 +32,17 @@ class Modules(Loader):
 
         raise CmdError(f"No module available named '{name.lower()}'")
 
-    def options(self, user=None):
+    def options(self):
         if not self.selected:
             raise CmdError("No module selected")
         return self.selected.options
 
-    def info(self, user=None):
+    def info(self):
         if not self.selected:
             raise CmdError("No module selected")
         return dict(self.selected)
 
-    def set(self, name: str, value: str, user=None):
+    def set(self, name: str, value: str):
         if not self.selected:
             raise CmdError("No module selected")
 
@@ -51,11 +51,11 @@ class Modules(Loader):
         except KeyError:
             raise CmdError(f"Unknown option '{name}'")
 
-    def run(self, guids, user=None):
+    def run(self, guids):
         for guid in guids:
             ipc_server.publish_event(Events.NEW_JOB, (guid, Job(module=self.selected)))
 
-    def reload(self, user=None):
+    def reload(self):
         self.get_loadables()
         if self.selected:
             self.use(self.selected.name)
@@ -64,7 +64,7 @@ class Modules(Loader):
             self.teamserver.update_available_loadables()
         )
 
-    def get_selected(self, user=None):
+    def get_selected(self):
         if self.selected:
             return dict(self.selected)
 

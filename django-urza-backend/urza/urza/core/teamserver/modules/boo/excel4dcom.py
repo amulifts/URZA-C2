@@ -11,7 +11,7 @@ class STModule(Module):
     def __init__(self):
         self.name = 'boo/excel4dcom'
         self.language = 'boo'
-        self.description = 'Injects urza shellcode directly into Excel.exe using Excel 4.0 / XLM Macros'
+        self.description = 'Injects URZA shellcode directly into Excel.exe using Excel 4.0 / XLM Macros'
         self.run_in_thread = False
         self.author = '@rvrsh3ll (Original C# version), @byt3bl33d3r (Boolang port)'
         self.references = []

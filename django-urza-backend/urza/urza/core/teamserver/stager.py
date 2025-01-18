@@ -1,4 +1,5 @@
-# urza\urza\core\teamserver\stager.py
+# urza/core/teamserver/stager.py
+
 
 class Stager:
     def __init__(self):

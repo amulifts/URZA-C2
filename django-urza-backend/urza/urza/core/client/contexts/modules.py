@@ -1,10 +1,10 @@
-# urza\urza\core\client\contexts\modules.py
+# urza/core/client/contexts/modules.py
 
 import asyncio
 import logging
 from typing import List
 from urza.core.client.utils import command, register_cli_commands
-from terminaltables import SingleTable
+from terminaltables import AsciiTable
 from time import gmtime, strftime
 
 @register_cli_commands
@@ -56,7 +56,7 @@ class Modules:
         for m_name, m_description in response.result.items():
             table_data.append([m_name, m_description])
 
-        table = SingleTable(table_data, title="Modules")
+        table = AsciiTable(table_data, title="Modules")
         table.inner_row_border = True
         print(table.table)
 
@@ -72,7 +72,7 @@ class Modules:
         for k, v in response.result.items():
             table_data.append([k, v["Required"], v["Value"], v["Description"]])
 
-        table = SingleTable(table_data, title=self.selected['name'])
+        table = AsciiTable(table_data, title=self.selected['name'])
         table.inner_row_border = True
         print(table.table)
 
@@ -91,7 +91,7 @@ class Modules:
         for k, v in response.result['options'].items():
             table_data.append([k, v["Required"], v["Value"], v["Description"]])
 
-        table = SingleTable(table_data, title=self.selected['name'])
+        table = AsciiTable(table_data, title=self.selected['name'])
         table.inner_row_border = True
         print(table.table)
 

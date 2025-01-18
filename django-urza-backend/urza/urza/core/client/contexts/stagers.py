@@ -1,8 +1,8 @@
-# urza\urza\core\client\contexts\stagers.py
+# urza/core/client/contexts/stagers.py
 
 import asyncio
 import logging
-from terminaltables import SingleTable
+from terminaltables import AsciiTable
 from urza.core.utils import print_good
 from urza.core.client.utils import command, register_cli_commands
 
@@ -53,7 +53,7 @@ class Stagers:
         for name,fields in response.result.items():
             table_data.append([name, fields["description"]])
 
-        table = SingleTable(table_data, title="Available")
+        table = AsciiTable(table_data, title="Available")
         table.inner_row_border = True
         print(table.table)
 
@@ -72,19 +72,19 @@ class Stagers:
         for k, v in response.result.items():
             table_data.append([k, v["Required"], v["Value"], v["Description"]])
 
-        table = SingleTable(table_data, title="Stager Options")
+        table = AsciiTable(table_data, title="Stager Options")
         table.inner_row_border = True
         print(table.table)
 
     @command
-    def generate(self, listener_id: str, response):
+    def generate(self, listener_name: str, response):
         """
         Generate the selected stager
 
-        Usage: generate [-h] <listener_id> 
+        Usage: generate [-h] <listener_name> 
         
         Arguments:
-            listener_id   The unique listener ID to use
+            listener_name   listener name
         """
 
         generated_stager = response.result

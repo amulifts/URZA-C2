@@ -40,45 +40,35 @@ class STModule(Module):
             return src
 
     def process(self, context, output):
+        if self._new_dmp_file == True:
+            self._new_dmp_file = False
+            self.gzip_file = os.path.join(
+                get_path_in_data_folder("logs"),
+                f"{context.session.guid}/minidump_{datetime.now().strftime('%Y_%m_%d_%H%M%S')}.gz"
+            )
+            self.decompressed_file = os.path.join(
+                get_path_in_data_folder("logs"),
+                f"{context.session.guid}/minidump_{datetime.now().strftime('%Y_%m_%d_%H%M%S')}.bin"
+            )
+
         try:
-            # Create file paths for the first chunk
-            if self._new_dmp_file:
-                self._new_dmp_file = False
-                timestamp = datetime.now().strftime('%Y_%m_%d_%H%M%S')
-                base_path = os.path.join(get_path_in_data_folder("logs"), context.session.guid)
-                self.gzip_file = f"{base_path}/minidump_{timestamp}.gz"
-                self.decompressed_file = f"{base_path}/minidump_{timestamp}.bin"
-                os.makedirs(base_path, exist_ok=True)
+            file_chunk = output['data']
+            with open(self.gzip_file, 'ab+') as reassembled_gzip_file:
+                reassembled_gzip_file.write(b64decode(file_chunk))
 
-            # Write chunk to gzip file
-            file_chunk = output.get('data', None)
-            if file_chunk:
-                with open(self.gzip_file, 'ab') as reassembled_gzip_file:
-                    reassembled_gzip_file.write(b64decode(file_chunk))
-            else:
-                logging.error("No data found in output.")
-                return "Invalid chunk data."
-
-            # Process the final chunk
             if output['current_chunk_n'] == (output['chunk_n'] + 1):
                 try:
-                    # Decompress gzip file
                     with open(self.decompressed_file, 'wb') as reassembled_file:
-                        with gzip.open(self.gzip_file, 'rb') as compressed_mem_dump:
+                        with gzip.open(self.gzip_file) as compressed_mem_dump:
                             reassembled_file.write(compressed_mem_dump.read())
-
-                    # Parse memory dump
-                    results = pypykatz.parse_minidump_file(self.decompressed_file)
-                    self._new_dmp_file = True
-                    return json.dumps(results, cls=UniversalEncoder, indent=4, sort_keys=True)
-
                 except Exception as e:
-                    logging.error(f"Error during final chunk processing: {e}", exc_info=True)
-                    return "Error during memory dump processing."
+                    logging.error(f"Error decompressing re-assembled memory dump: {e}")
+
+                results = pypykatz.parse_minidump_file(self.decompressed_file)
+                self._new_dmp_file = True
+                return json.dumps(results, cls = UniversalEncoder, indent=4, sort_keys=True)
+
             else:
                 return f"Processed chunk {output['current_chunk_n']}/{output['chunk_n'] + 1}"
-
-        except Exception as e:
-            logging.error(f"Unexpected error in processing: {e}", exc_info=True)
-            return "An unexpected error occurred."
-
+        except TypeError:
+            return output

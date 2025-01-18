@@ -1,4 +1,4 @@
-# urza\urza\core\teamserver\session.py
+# urza/core/teamserver/session.py
 
 import json
 import logging
