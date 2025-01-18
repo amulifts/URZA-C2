@@ -27,4 +27,3 @@ export function ConnectionStatusBar({ isConnected, onDisconnect }: ConnectionSta
     </Card>
   )
 }
-

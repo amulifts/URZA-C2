@@ -1,4 +1,4 @@
-# SILENTTRINITY/MANIFEST.in
+# URZA/MANIFEST.in
 
-recursive-include silenttrinity/core/teamserver/data *
-recursive-include silenttrinity/core/teamserver/comms *.boo
+recursive-include urza/core/teamserver/data *
+recursive-include urza/core/teamserver/comms *.boo

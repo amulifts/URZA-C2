@@ -92,12 +92,12 @@ export function Sidebar({ className }: SidebarProps) {
       href: "/agents",
       color: "text-gray-500",
     },
-    {
-      label: "Templates",
-      icon: LayoutTemplate,
-      href: "/templates",
-      color: "text-gray-500",
-    },
+    // {
+    //   label: "Templates",
+    //   icon: LayoutTemplate,
+    //   href: "/templates",
+    //   color: "text-gray-500",
+    // },
     {
       label: "Tasks",
       icon: ListEnd,

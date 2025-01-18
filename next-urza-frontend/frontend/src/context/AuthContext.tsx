@@ -21,6 +21,7 @@ interface AuthContextType {
   login: (username: string, password: string) => Promise<void>;
   logout: () => void;
   setUser: React.Dispatch<React.SetStateAction<UserData | null>>;
+  token: string | null; // Added token
 }
 
 export const AuthContext = createContext<AuthContextType>({
@@ -30,12 +31,14 @@ export const AuthContext = createContext<AuthContextType>({
   login: async () => {},
   logout: () => {},
   setUser: () => {},
+  token: null, // Initialize token
 });
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<UserData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const [token, setToken] = useState<string | null>(null); // New state for token
   const router = useRouter();
 
   // Axios instance for API calls
@@ -50,6 +53,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const accessToken = localStorage.getItem('access_token');
       if (accessToken) {
         config.headers['Authorization'] = `Bearer ${accessToken}`;
+        setToken(accessToken); // Update token state
       }
       return config;
     },
@@ -74,6 +78,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             const { access } = response.data;
             localStorage.setItem('access_token', access);
             originalRequest.headers['Authorization'] = `Bearer ${access}`;
+            setToken(access); // Update token state
             return apiClient(originalRequest);
           } catch (err) {
             logout();
@@ -100,6 +105,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       const { access, refresh } = response.data;
       localStorage.setItem('access_token', access);
       localStorage.setItem('refresh_token', refresh);
+
+      setToken(access); // Set the token in state
       
       const decoded: any = jwtDecode(access);
       
@@ -116,6 +123,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.error("Login error:", err);
       setError(err.response?.data?.detail || "Login failed.");
       setUser(null);
+      setToken(null); // Clear token on failure
       throw err; // Ensure the error is propagated
     }
   };
@@ -136,6 +144,7 @@ const logout = async () => {
     // 2) If success, remove tokens from localStorage
     localStorage.removeItem("access_token");
     localStorage.removeItem("refresh_token");
+    setToken(null); // Clear token
     // 3) Do any other cleanup and redirect
     router.push("/login");
   } catch (error) {
@@ -157,6 +166,7 @@ const logout = async () => {
             full_name: decoded.full_name,
             role: decoded.role,
           });
+          setToken(access); // Set token
         } catch (err) {
           console.error("Error decoding token on init:", err);
           logout();
@@ -168,7 +178,7 @@ const logout = async () => {
   }, []);
 
   return (
-    <AuthContext.Provider value={{ user, loading, error, login, logout, setUser }}>
+    <AuthContext.Provider value={{ user, loading, error, login, logout, setUser, token }}>
       {children}
     </AuthContext.Provider>
   );

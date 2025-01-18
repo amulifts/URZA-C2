@@ -15,9 +15,9 @@ setuptools.setup(
         # e.g. "aiosqlite", "websockets", etc., if you want them auto-installed
     ],
     entry_points={
-        # If you want to keep st.py as a script entry point, you could do:
+        # If you want to keep main.py as a script entry point, you could do:
         # "console_scripts": [
-        #     "st = silenttrinity.__main__:run",
+        #     "main = urza.__main__:run",
         # ],
     },
 )

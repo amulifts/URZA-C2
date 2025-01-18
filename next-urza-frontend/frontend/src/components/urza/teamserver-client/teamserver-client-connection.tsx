@@ -17,7 +17,6 @@ import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { toast } from "react-toastify"; // Updated import
 
-
 export function TeamServerClientConnection() {
   const [isConnected, setIsConnected] = useState(false)
   const [connectionUptime, setConnectionUptime] = useState(0)
@@ -311,4 +310,3 @@ export function TeamServerClientConnection() {
     </div>
   )
 }
-

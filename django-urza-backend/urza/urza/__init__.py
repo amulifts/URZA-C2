@@ -1,2 +1,2 @@
-VERSION = "0.4.6dev"
-CODENAME = "Zanzibar"
+VERSION = "1.0"
+CODENAME = "URZA"
