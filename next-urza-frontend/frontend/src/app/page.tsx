@@ -1,4 +1,5 @@
-// next-urza-frontend\frontend\src\app\page.tsx
+// URZA-C2/next-urza-frontend/frontend/src/app/page.tsx
+
 "use client"
 
 import { useEffect } from "react"

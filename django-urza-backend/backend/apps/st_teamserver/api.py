@@ -4,7 +4,12 @@ from ninja import Router
 from ninja.errors import HttpError
 import logging
 from .process_manager import TeamServerManager
-from .schemas import StartTeamServerSchema, TeamServerResponseSchema, StopTeamServerResponseSchema, LogEntrySchema  # Import the new schema
+from .schemas import (
+    StartTeamServerSchema, 
+    TeamServerResponseSchema, 
+    StopTeamServerResponseSchema, 
+    LogEntrySchema
+)
 from apps.security import SimpleJWTBearer
 from typing import List, Optional
 from django.conf import settings
@@ -13,23 +18,13 @@ import json
 import re
 
 logger = logging.getLogger(__name__)
-
 router = Router()
-
-# Initialize the TeamServerManager
 teamserver_manager = TeamServerManager()
 
 @router.post("/start/", response=TeamServerResponseSchema, auth=SimpleJWTBearer())
 def start_teamserver(request, payload: StartTeamServerSchema):
-    """
-    Start the TeamServer with the provided configuration.
-    Only Admin users can perform this action.
-    """
     user = request.auth
-    if not user:
-        raise HttpError(401, "Unauthorized: Please log in.")
-
-    if user.profile.role != "Admin":
+    if not user or user.profile.role != "Admin":
         raise HttpError(403, "Forbidden: Only Admins can start TeamServer.")
 
     try:
@@ -40,24 +35,14 @@ def start_teamserver(request, payload: StartTeamServerSchema):
             secure=payload.secure
         )
         return TeamServerResponseSchema(detail="TeamServer started successfully.", pid=pid)
-    except FileNotFoundError as fnf_err:
-        logger.error(fnf_err)
-        raise HttpError(500, str(fnf_err))
     except Exception as e:
         logger.exception("Failed to start TeamServer.")
-        raise HttpError(500, "Internal Server Error: Unable to start TeamServer.")
+        raise HttpError(500, str(e))
 
 @router.post("/stop/", response=StopTeamServerResponseSchema, auth=SimpleJWTBearer())
 def stop_teamserver(request):
-    """
-    Stop the currently running TeamServer.
-    Only Admin users can perform this action.
-    """
     user = request.auth
-    if not user:
-        raise HttpError(401, "Unauthorized: Please log in.")
-
-    if user.profile.role != "Admin":
+    if not user or user.profile.role != "Admin":
         raise HttpError(403, "Forbidden: Only Admins can stop TeamServer.")
 
     try:
@@ -66,7 +51,7 @@ def stop_teamserver(request):
     except Exception as e:
         logger.exception("Failed to stop TeamServer.")
         raise HttpError(500, "Internal Server Error: Unable to stop TeamServer.")
-    
+
 @router.get("/logs/", response=List[LogEntrySchema], auth=SimpleJWTBearer())
 def get_logs(request, limit: int = 100, level: Optional[str] = None):
     """

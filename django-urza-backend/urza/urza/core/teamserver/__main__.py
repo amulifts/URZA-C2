@@ -192,6 +192,10 @@ class STWebSocketServerProtocol(WebSocketServerProtocol):
     teamserver_digest = None
 
     async def process_request(self, path, request_headers):
+        if path.startswith('/api'):
+            logging.debug(f"API request received: {path}, passing to Quart")
+            # Bypass WebSocket handshake; let Quart handle the request
+            return None  # Let Quart handle the request
         try:
             username, password_digest = decode_auth_header(request_headers)
             if not hmac.compare_digest(password_digest, STWebSocketServerProtocol.teamserver_digest):

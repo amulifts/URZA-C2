@@ -2,7 +2,7 @@
 
 "use client"
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect } from 'react'
 import { Server, Eye, EyeOff, Copy, RefreshCw, AlertTriangle } from 'lucide-react'
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -35,7 +35,6 @@ export function TeamServer() {
   const [uptime, setUptime] = useState(0)
   const [showPassword, setShowPassword] = useState(false)
   const [secureMode, setSecureMode] = useState(false)
-  const [showAdvancedOptions, setShowAdvancedOptions] = useState(false)
   const [serverConfig, setServerConfig] = useState({
     ipBinding: '0.0.0.0',
     port: '6000',
@@ -45,14 +44,13 @@ export function TeamServer() {
   const [isFetchingLogs, setIsFetchingLogs] = useState(false)
   const [logLevel, setLogLevel] = useState<string | null>('ALL')
 
-  // New state to store connected clients
   const [connectedClients, setConnectedClients] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     let interval: NodeJS.Timeout
     if (isRunning) {
       interval = setInterval(() => {
-        setUptime(prevUptime => prevUptime + 1)
+        setUptime(prev => prev + 1)
       }, 1000)
     }
     return () => clearInterval(interval)
@@ -61,15 +59,11 @@ export function TeamServer() {
   useEffect(() => {
     const fetchLogs = async () => {
       setIsFetchingLogs(true)
-      console.log(`Fetching logs with level: ${logLevel}`)
       try {
         const params: any = { limit: 100 }
-        if (logLevel) {
-          params.level = logLevel
-        }
+        if (logLevel) params.level = logLevel
         const response = await apiClient.get("/st_teamserver/logs/", { params })
         if (response.status === 200) {
-          console.log(`Received ${response.data.length} logs`)
           setLogs(response.data)
         }
       } catch (error: any) {
@@ -90,13 +84,11 @@ export function TeamServer() {
 
     if (isRunning) {
       fetchLogs()
-      const logInterval = setInterval(fetchLogs, 5000) // Fetch logs every 5 seconds
-
+      const logInterval = setInterval(fetchLogs, 5000)
       return () => clearInterval(logInterval)
     }
   }, [isRunning, logLevel])
 
-   // Process logs to determine connected clients
   useEffect(() => {
     if (!isRunning) {
       setConnectedClients(new Set())
@@ -104,36 +96,29 @@ export function TeamServer() {
     }
 
     const clientSet = new Set<string>()
-
     logs.forEach(log => {
       const message = log.message.toLowerCase()
-
-      // Detect client connections
       const connectMatch = log.message.match(/new client connected\s+([\w@.]+)/i)
       if (connectMatch && connectMatch[1]) {
         clientSet.add(connectMatch[1])
       }
-
-      // Detect client disconnections
       const disconnectMatch = log.message.match(/client disconnected\s+([\w@.]+)/i)
       if (disconnectMatch && disconnectMatch[1]) {
         clientSet.delete(disconnectMatch[1])
       }
     })
-
     setConnectedClients(clientSet)
   }, [logs, isRunning])
-
 
   const formatUptime = (seconds: number) => {
     const hours = Math.floor(seconds / 3600)
     const minutes = Math.floor((seconds % 3600) / 60)
-    const remainingSeconds = seconds % 60
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${remainingSeconds.toString().padStart(2, '0')}`
+    const secs = seconds % 60
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`
   }
 
   const handleConfigChange = (key: string, value: string | boolean) => {
-    setServerConfig(prevConfig => ({ ...prevConfig, [key]: value }))
+    setServerConfig(prev => ({ ...prev, [key]: value }))
   }
 
   const generateSecurePassword = () => {
@@ -159,7 +144,6 @@ export function TeamServer() {
         port: parseInt(serverConfig.port),
         secure: secureMode,
       })
-
       if (response.status === 200) {
         setIsRunning(true)
         setUptime(0)
@@ -173,26 +157,23 @@ export function TeamServer() {
 
   const stopTeamServer = async () => {
     if (!isRunning) {
-      toast.error("TeamServer is not running.");
-      return;
+      toast.error("TeamServer is not running.")
+      return
     }
-
     try {
-      const response = await apiClient.post("/st_teamserver/stop/");
-
+      const response = await apiClient.post("/st_teamserver/stop/")
       if (response.status === 200) {
-        setIsRunning(false);
-        setUptime(0);
-        setLogs([]); // Clear logs on stop
-        setConnectedClients(new Set()) // Reset connected clients
-        toast.success(response.data.detail || "TeamServer stopped successfully.");
+        setIsRunning(false)
+        setUptime(0)
+        setLogs([])
+        setConnectedClients(new Set())
+        toast.success(response.data.detail || "TeamServer stopped successfully.")
       }
     } catch (error: any) {
-      console.error(error);
-      toast.error(error.response?.data?.detail || "Failed to stop TeamServer.");
+      console.error(error)
+      toast.error(error.response?.data?.detail || "Failed to stop TeamServer.")
     }
-  };
-
+  }
 
   const handleStartStop = () => {
     if (isRunning) {
@@ -213,7 +194,6 @@ export function TeamServer() {
           <CardDescription>Manage and monitor your TeamServer instance</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* Status Section */}
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <Badge variant={isRunning ? "default" : "destructive"} className="text-lg py-1 px-3">
@@ -227,14 +207,13 @@ export function TeamServer() {
             </div>
             {isRunning && (
               <div className="flex gap-4 text-sm">
-                <div>Connected Clients: {connectedClients.size}</div> {/* Dynamic value */}
+                <div>Connected Clients: {connectedClients.size}</div>
                 <div>Active Port: {serverConfig.port}</div>
                 <div>Mode: {secureMode ? 'WSS' : 'WS'}</div>
               </div>
             )}
           </div>
 
-          {/* Configuration Form */}
           <Tabs defaultValue="server-settings">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="server-settings">Server Settings</TabsTrigger>
@@ -333,7 +312,6 @@ export function TeamServer() {
             </TabsContent>
           </Tabs>
 
-          {/* Advanced Options */}
           <Collapsible>
             <CollapsibleTrigger asChild>
               <Button variant="ghost">Advanced Options</Button>
@@ -355,18 +333,15 @@ export function TeamServer() {
           </Collapsible>
         </CardContent>
         <CardFooter className="flex justify-between">
-          <div>
-            <Button
-              onClick={handleStartStop}
-              className={isRunning ? "bg-red-600 hover:bg-red-700" : "bg-green-600 hover:bg-green-700"}
-            >
-              {isRunning ? "Stop Server" : "Start Server"}
-            </Button>
-          </div>
+          <Button
+            onClick={handleStartStop}
+            className={isRunning ? "bg-red-600 hover:bg-red-700" : "bg-green-600 hover:bg-green-700"}
+          >
+            {isRunning ? "Stop Server" : "Start Server"}
+          </Button>
         </CardFooter>
       </Card>
 
-      {/* Connection Details Card */}
       {isRunning && (
         <Card>
           <CardHeader>
@@ -398,7 +373,6 @@ export function TeamServer() {
         </Card>
       )}
 
-      {/* Logs Section */}
       {isRunning && (
         <Card>
           <CardHeader className="flex flex-row justify-between items-center">
@@ -412,7 +386,7 @@ export function TeamServer() {
                   <SelectValue placeholder="All Levels" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="ALL">All</SelectItem> {/* Corrected Value */}
+                  <SelectItem value="ALL">All</SelectItem>
                   <SelectItem value="DEBUG">DEBUG</SelectItem>
                   <SelectItem value="INFO">INFO</SelectItem>
                   <SelectItem value="WARNING">WARNING</SelectItem>
@@ -423,8 +397,7 @@ export function TeamServer() {
                 variant="outline"
                 size="icon"
                 onClick={async () => {
-                  // Manual refresh
-                  setLogs([]) // Clear current logs
+                  setLogs([])
                   try {
                     const response = await apiClient.get("/st_teamserver/logs/", { params: { limit: 100, level: logLevel || undefined } })
                     if (response.status === 200) {
@@ -468,17 +441,15 @@ export function TeamServer() {
                       <TableCell>
                         <Badge variant={
                           log.level === 'ERROR' ? 'destructive' :
-                            log.level === 'WARNING' ? 'secondary' :
-                              log.level === 'INFO' ? 'default' :
-                                'outline'
+                          log.level === 'WARNING' ? 'secondary' :
+                          log.level === 'INFO' ? 'default' :
+                          'outline'
                         }>
                           {log.level}
                         </Badge>
                       </TableCell>
                       <TableCell>{log.message}</TableCell>
-                      <TableCell>
-                        {log.filename}:{log.lineno} ({log.funcName})
-                      </TableCell>
+                      <TableCell>{log.filename}:{log.lineno} ({log.funcName})</TableCell>
                     </tr>
                   ))}
                 </tbody>

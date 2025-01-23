@@ -8,10 +8,12 @@ from urza.core.events import Events
 from urza.core.teamserver.listener import Listener
 from urza.core.ipcclient import IPCException
 from urza.core.utils import get_ipaddress, gen_random_string, get_path_in_data_folder
+from urza.core.utils import get_path_in_data_folder, decode_auth_header
 from quart import Quart, Blueprint, request, Response
 #from quart.logging import default_handler, serving_handler
 from hypercorn import Config
 from hypercorn.asyncio import serve
+from urllib.parse import urlparse
 
 class STListener(Listener):
     def __init__(self):
@@ -90,6 +92,8 @@ class STListener(Listener):
 
         self.app = Quart(__name__)
         self.app.register_blueprint(http_blueprint)
+
+         # Start the server with Hypercorn
         asyncio.run(serve(self.app, config))
 
     async def check_if_naughty(self):

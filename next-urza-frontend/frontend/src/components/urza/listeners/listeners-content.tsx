@@ -1,4 +1,4 @@
-// next-urza-frontend\frontend\src\components\urza\listeners\listeners-content.tsx
+// URZA-C2/next-urza-frontend/frontend/src/components/urza/listeners/listeners-content.tsx
 
 "use client";
 

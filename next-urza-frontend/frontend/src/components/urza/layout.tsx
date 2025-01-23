@@ -1,4 +1,4 @@
-// next-urza-frontend\frontend\src\components\urza\layout.tsx
+// URZA-C2/next-urza-frontend/frontend/src/components/urza/layout.tsx
 
 "use client";
 
@@ -48,7 +48,7 @@ interface RouteItem {
 export function Sidebar({ className }: SidebarProps) {
   const pathname = usePathname();
   const [openCategories, setOpenCategories] = useState<string[]>([]);
-  const { user } = useContext(AuthContext); // Access user info from AuthContext
+  const { user } = useContext(AuthContext);
 
   const routes: RouteItem[] = [
     {
@@ -92,12 +92,6 @@ export function Sidebar({ className }: SidebarProps) {
       href: "/agents",
       color: "text-gray-500",
     },
-    // {
-    //   label: "Templates",
-    //   icon: LayoutTemplate,
-    //   href: "/templates",
-    //   color: "text-gray-500",
-    // },
     {
       label: "Tasks",
       icon: ListEnd,
@@ -118,7 +112,6 @@ export function Sidebar({ className }: SidebarProps) {
     },
   ];
 
-  // Add the Users route only for Admin users
   if (user?.role === "Admin") {
     routes.push({
       label: "Users",
@@ -129,7 +122,6 @@ export function Sidebar({ className }: SidebarProps) {
   }
 
   const toggleCategory = (label: string) => {
-    console.log(`Toggling category: ${label}`);
     setOpenCategories((prev) =>
       prev.includes(label) ? prev.filter((c) => c !== label) : [...prev, label]
     );
@@ -154,7 +146,6 @@ export function Sidebar({ className }: SidebarProps) {
                 depth > 0 && "pl-8",
                 isOpen && "bg-gray-100"
               )}
-              // ✅ Removed the onClick handler to prevent double toggling
             >
               <span className="flex items-center">
                 <item.icon className={cn("h-5 w-5 mr-3", item.color)} />
@@ -176,7 +167,7 @@ export function Sidebar({ className }: SidebarProps) {
 
     return (
       <NextLink
-        key={item.href || item.label} // Ensures unique keys
+        key={item.href || item.label}
         href={item.href || "#"}
         className={cn(
           "flex items-center p-3 w-full text-sm font-medium cursor-pointer hover:bg-gray-100 rounded-lg transition",
@@ -199,9 +190,7 @@ export function Sidebar({ className }: SidebarProps) {
     <div className="h-full flex flex-col p-4">
       <div className="flex-1 rounded-xl border border-gray-200 bg-white overflow-hidden flex flex-col">
         <div className="px-3 py-2 flex-1">
-          <div className="space-y-1 py-4">
-            {routes.map((route) => renderRouteItem(route))}
-          </div>
+          <div className="space-y-1 py-4">{routes.map((route) => renderRouteItem(route))}</div>
         </div>
         <div className="mt-auto">
           <UserAccountSwitcher />

@@ -7,10 +7,10 @@ import uuid
 from time import time
 from io import BytesIO
 from zipfile import ZipFile, ZIP_DEFLATED
-from urza.core.utils import get_path_in_data_folder, get_path_in_package
-from urza.core.teamserver.jobs import Jobs
-from urza.core.teamserver.comms.utils import gen_stager_code
-from urza.core.teamserver.crypto import ECDHE
+from ...core.utils import get_path_in_data_folder, get_path_in_package
+from ...core.teamserver.jobs import Jobs
+from ...core.teamserver.comms.utils import gen_stager_code
+from ...core.teamserver.crypto import ECDHE
 
 
 class SessionNotFoundError(Exception):

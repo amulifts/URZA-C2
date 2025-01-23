@@ -17,9 +17,9 @@ interface TeamServer {
   name: string;
   host: string;
   port: number;
-  protocol: string; // 'WS' or 'WSS'
+  protocol: string;
   is_favorite: boolean;
-  status: string; // 'online', 'offline', 'unstable'
+  status: string;
   last_seen: string | null;
 }
 
@@ -40,12 +40,10 @@ export function TeamServerList() {
     { name: 'TeamServer3', host: '0.0.0.0', port: 6002, protocol: 'WS', is_favorite: false, status: 'offline', last_seen: null },
     { name: 'TeamServer4', host: '0.0.0.0', port: 6003, protocol: 'WSS', is_favorite: false, status: 'offline', last_seen: null },
     { name: 'TeamServer5', host: '0.0.0.0', port: 6004, protocol: 'WS', is_favorite: false, status: 'offline', last_seen: null },
-    // Add more TeamServers as needed
   ]);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const router = useRouter();
 
-  // Function to fetch logs and update TeamServers' statuses
   const fetchLogs = async () => {
     try {
       const response = await apiClient.get("/st_teamserver/logs/", { params: { limit: 100 } });
@@ -53,40 +51,26 @@ export function TeamServerList() {
         const logs: LogEntry[] = response.data;
         updateTeamServerStatuses(logs);
       } else {
-        toast.error("Failed to fetch logs.", {
-          position: "top-right",
-          autoClose: 3000,
-        });
+        toast.error("Failed to fetch logs.");
       }
     } catch (error: any) {
       console.error(error);
-      toast.error("An error occurred while fetching logs.", {
-        position: "top-right",
-        autoClose: 3000,
-      });
+      toast.error("An error occurred while fetching logs.");
     }
   };
 
-  // Function to update TeamServers' statuses based on logs
   const updateTeamServerStatuses = (logs: LogEntry[]) => {
     const updatedServers = teamServers.map(server => {
-      // Initialize as offline
       let status: 'online' | 'offline' | 'unstable' = 'offline';
       let lastSeen: string | null = server.last_seen;
 
-      // Iterate over logs to find start/stop events for this server
       logs.forEach(log => {
-        // Clean the message by removing ANSI escape codes
-        const message_clean = cleanMessage(log.message);
-
-        // Detect TeamServer start
+        const message_clean = log.message.replace(/\x1B[@-_][0-?]*[ -/]*[@-~]/g, ''); 
         const startMatch = message_clean.match(new RegExp(`^Teamserver started on\\s+${escapeRegExp(server.host)}:${server.port}$`, 'i'));
         if (startMatch) {
           status = 'online';
           lastSeen = log.time;
         }
-
-        // Detect TeamServer stop
         const stopMatch = message_clean.match(new RegExp(`^Teamserver stopped on\\s+${escapeRegExp(server.host)}:${server.port}$`, 'i'));
         if (stopMatch) {
           status = 'offline';
@@ -96,39 +80,25 @@ export function TeamServerList() {
 
       return { ...server, status, last_seen: lastSeen };
     });
-
     setTeamServers(updatedServers);
   };
 
-  // Utility function to escape regex special characters in strings
   const escapeRegExp = (string: string) => {
     return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   };
 
-  // Utility function to remove ANSI escape codes
-  const cleanMessage = (message: string) => {
-    return message.replace(/\x1B[@-_][0-?]*[ -/]*[@-~]/g, '');
-  };
-
   useEffect(() => {
-      // Initial fetch of logs to set statuses
-      fetchLogs();
-      const logInterval = setInterval(fetchLogs, 5000); // Fetch logs every 5 seconds
-  
-      return () => clearInterval(logInterval);
-    }, []);
-    // avoid ([teamServers]); as it will cause infinite loop
+    fetchLogs();
+    const logInterval = setInterval(fetchLogs, 5000);
+    return () => clearInterval(logInterval);
+  }, []);
 
   const handleRefresh = () => {
     fetchLogs();
   };
 
   const handleConnect = (server: TeamServer) => {
-    // Toast a message saying feature is not implemented
-    toast.info("Feature not implemented yet.", {
-      position: "top-right",
-      autoClose: 3000,
-    });
+    toast.info("Feature not implemented yet.");
   };
 
   const handleToggleFavorite = async (server: TeamServer) => {
@@ -137,38 +107,23 @@ export function TeamServerList() {
         s.name === server.name ? { ...s, is_favorite: !s.is_favorite } : s
       );
       setTeamServers(updatedServers);
-      toast.success(`TeamServer '${server.name}' favorite status updated.`, {
-        position: "top-right",
-        autoClose: 2000,
-      });
-      // Optionally, persist the favorite status to the backend if desired
+      toast.success(`TeamServer '${server.name}' favorite status updated.`);
     } catch (error: any) {
       console.error(error);
-      toast.error("Failed to update favorite status.", {
-        position: "top-right",
-        autoClose: 3000,
-      });
+      toast.error("Failed to update favorite status.");
     }
   };
 
   const handleCopyDetails = (server: TeamServer) => {
     const connectionString = `${server.protocol.toLowerCase()}://${server.host}:${server.port}`;
     navigator.clipboard.writeText(connectionString);
-    toast.success("Connection details copied to clipboard.", {
-      position: "top-right",
-      autoClose: 2000,
-    });
+    toast.success("Connection details copied to clipboard.");
   };
 
   const handleRemove = (serverName: string) => {
-    // if (!confirm("Are you sure you want to remove this TeamServer?")) return;
     const updatedServers = teamServers.filter(s => s.name !== serverName);
     setTeamServers(updatedServers);
-    toast.success("TeamServer removed successfully.", {
-      position: "top-right",
-      autoClose: 3000,
-    });
-    // Optionally, inform the backend about the removal if necessary
+    toast.success("TeamServer removed successfully.");
   };
 
   return (
@@ -179,7 +134,6 @@ export function TeamServerList() {
           <Button variant="outline" size="icon" onClick={handleRefresh} disabled={isRefreshing}>
             <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
           </Button>
-          {/* Plus button when click with route to /teamserver in a new tab*/}
           <Button variant="default" size="icon" onClick={() => window.open('/teamserver', '_blank')}>
             <Plus className="h-4 w-4" />
           </Button>
@@ -204,8 +158,8 @@ export function TeamServerList() {
                 <TableCell>
                   <Badge variant={
                     server.status === 'online' ? 'default' :
-                      server.status === 'offline' ? 'destructive' :
-                        'secondary'
+                    server.status === 'offline' ? 'destructive' :
+                    'secondary'
                   }>
                     {server.status}
                   </Badge>

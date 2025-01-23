@@ -1,10 +1,11 @@
-// next-urza-frontend\frontend\src\app\layout.tsx
+// URZA-C2/next-urza-frontend/frontend/src/app/layout.tsx
 
 "use client"
 
 import "./globals.css"
 import React from "react"
 import type { Metadata } from "next"
+import { TeamServerConnectionProvider } from "@/context/TeamServerConnectionContext";
 import { AuthProvider } from "@/context/AuthContext"
 import { ToastContainer } from "react-toastify"
 import "react-toastify/dist/ReactToastify.css"
@@ -43,10 +44,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en">
       <body className={geist.className}>
         <AuthProvider>
-          <SidebarWrapper>
-            {children}
-            <ToastContainer />
-          </SidebarWrapper>
+          <TeamServerConnectionProvider>
+            <SidebarWrapper>
+            
+              {children}
+              <ToastContainer />
+            </SidebarWrapper>
+          </TeamServerConnectionProvider>
         </AuthProvider>
       </body>
     </html>

@@ -4,28 +4,29 @@
 
 import { useState } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { ConnectionStatusBar } from "@/components/urza/teamserver-client/connection-status-bar"
 import { TeamServerList } from "@/components/urza/teamserver-client/teamserver-list"
-import { TeamServerConnectionForm } from "@/components/urza/teamserver-client/teamserver-connection-form"
+import { TeamServerClientConnection } from "@/components/urza/teamserver-client/teamserver-client-connection"
 
 export default function TeamServerClientPage() {
-  const [isConnected, setIsConnected] = useState(false)
-
   return (
     <div className="p-6 space-y-6">
       <h1 className="text-2xl font-semibold text-gray-900">TeamServer Client</h1>
-      
-      <Tabs defaultValue="available-servers" className="space-y-6">
+
+      <ConnectionStatusBar />
+
+      <Tabs defaultValue="available-servers" className="space-y-4">
         <TabsList>
           <TabsTrigger value="available-servers">Available Servers</TabsTrigger>
           <TabsTrigger value="manual-connect">Manual Connect</TabsTrigger>
         </TabsList>
-        
+
         <TabsContent value="available-servers">
           <TeamServerList />
         </TabsContent>
-        
+
         <TabsContent value="manual-connect">
-          <TeamServerConnectionForm onConnect={() => setIsConnected(true)} />
+          <TeamServerClientConnection />
         </TabsContent>
       </Tabs>
     </div>

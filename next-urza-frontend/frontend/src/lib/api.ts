@@ -1,4 +1,4 @@
-// next-urza-frontend\frontend\src\lib\api.ts
+// URZA-C2/next-urza-frontend/frontend/src/lib/api.ts
 
 import axios from 'axios';
 
@@ -6,7 +6,7 @@ export const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://loca
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
-  withCredentials: true, // if you do need cookies (CSRF, etc.)
+  withCredentials: true,
 });
 
 // Request interceptor to attach the access token
