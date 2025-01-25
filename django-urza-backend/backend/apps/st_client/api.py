@@ -1,4 +1,4 @@
-# django-urza-backend/backend/apps/st_client/api.py
+# URZA-C2/django-urza-backend/backend/apps/st_client/api.py
 
 from ninja import Router
 from ninja.errors import HttpError

@@ -1,4 +1,4 @@
-# django-urza-backend\backend\backend\urls.py
+# URZA-C2/django-urza-backend/backend/backend/urls.py
 
 from django.contrib import admin
 from django.urls import path

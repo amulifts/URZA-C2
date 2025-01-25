@@ -1,4 +1,4 @@
-# django-urza-backend\backend\apps\api.py
+# URZA-C2/django-urza-backend/backend/apps/api.py
 
 from ninja import NinjaAPI
 from apps.users.api import user_router

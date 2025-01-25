@@ -1,4 +1,4 @@
-# django-urza-backend\backend\apps\security.py
+# URZA-C2/django-urza-backend/backend/apps/security.py
 
 from ninja.security import HttpBearer
 from rest_framework_simplejwt.tokens import AccessToken

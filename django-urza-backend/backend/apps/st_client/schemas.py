@@ -1,4 +1,4 @@
-# django-urza-backend/backend/apps/st_client/schemas.py
+# URZA-C2/django-urza-backend/backend/apps/st_client/schemas.py
 
 from ninja import Schema
 from pydantic import AnyUrl  # Changed from HttpUrl to AnyUrl

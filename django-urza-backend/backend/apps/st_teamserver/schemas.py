@@ -1,4 +1,4 @@
-# django-urza-backend/backend/apps/st_teamserver/schemas.py
+# URZA-C2/django-urza-backend/backend/apps/st_teamserver/schemas.py
 
 from typing import Optional
 from ninja import Schema

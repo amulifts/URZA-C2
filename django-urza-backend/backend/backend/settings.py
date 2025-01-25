@@ -1,4 +1,4 @@
-# django-urza-backend\backend\backend\settings.py
+# URZA-C2/django-urza-backend/backend/backend/settings.py
 
 """
 Django settings for backend project.
