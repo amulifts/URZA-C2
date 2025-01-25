@@ -79,3 +79,4 @@ class ProcessManager:
                     logger.warning("Could not remove client PID file.")
         else:
             logger.warning("No client PID file. Possibly not running.")
+

@@ -56,3 +56,4 @@ def disconnect(request):
     except Exception as e:
         logger.exception("Failed to stop the client.")
         raise HttpError(500, "Internal Server Error: Unable to stop the client.")
+
