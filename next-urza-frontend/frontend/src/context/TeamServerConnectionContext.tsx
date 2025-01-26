@@ -1,4 +1,4 @@
-// frontend/src/context/TeamServerConnectionContext.tsx
+// URZA-C2/next-urza-frontend/frontend/src/context/TeamServerConnectionContext.tsx
 
 "use client"
 

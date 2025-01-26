@@ -1,4 +1,4 @@
-// next-urza-frontend\frontend\src\components\urza\main-content-wrapper.tsx
+// URZA-C2/next-urza-frontend/frontend/src/components/urza/main-content-wrapper.tsx
 
 interface MainContentWrapperProps {
   children: React.ReactNode

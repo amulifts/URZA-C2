@@ -1,4 +1,4 @@
-// next-urza-frontend/frontend/src/components/urza/teamserver-client/teamserver-list.tsx
+// URZA-C2/next-urza-frontend/frontend/src/components/urza/teamserver-client/teamserver-list.tsx
 
 "use client"
 

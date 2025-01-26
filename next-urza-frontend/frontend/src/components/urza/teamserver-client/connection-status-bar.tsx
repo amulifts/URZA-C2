@@ -1,4 +1,4 @@
-// frontend/src/components/urza/teamserver-client/connection-status-bar.tsx
+// URZA-C2/next-urza-frontend/frontend/src/components/urza/teamserver-client/connection-status-bar.tsx
 
 "use client"
 

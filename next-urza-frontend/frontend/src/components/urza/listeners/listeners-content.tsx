@@ -55,7 +55,6 @@ interface Listener {
 
 export function ListenersContent() {
   const router = useRouter();
-
   const [listeners, setListeners] = useState<Listener[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
@@ -70,23 +69,65 @@ export function ListenersContent() {
     return listeners.slice(startIndex, startIndex + itemsPerPage);
   };
 
-  /**
-   * Fetch logs and update listeners. 
-   * @param showToast - if true, show "Listeners loaded successfully" toast
-   */
+  // A helper to parse logs for started/stopped listeners
+  const extractListenersFromLogs = (logs: LogEntry[]): Listener[] => {
+    const resultMap: Record<string, Listener> = {};
+
+    // Regex for "Started http listener (10.211.55.17:80)"
+    const startRegex = /^Started\s+(\w+)\s+listener\s+\(([\d.]+):(\d+)\)$/i;
+
+    // If you ever log something like "Stopped http listener" or "TeamServer stopped on ..." for listeners, you can add another regex
+    // For demonstration, let's keep it simple.
+
+    for (const entry of logs) {
+      const { message, time } = entry;
+      const matchStart = message.match(startRegex);
+      if (matchStart) {
+        const [_, type, host, portStr] = matchStart;
+        const port = parseInt(portStr, 10);
+        const name = `${type}-${port}`;
+
+        // Mark as active
+        resultMap[name] = {
+          name,
+          listenerType: type,
+          host,
+          port,
+          status: "Active",
+          startTime: time,
+        };
+      }
+
+      // If you add a "Stopped" pattern, you could do something like:
+      // e.g. "Stopped http listener (10.211.55.17:80)"
+      // const stopMatch = message.match(/^Stopped\s+(\w+)\s+listener\s+\(([\d.]+):(\d+)\)$/i);
+      // if (stopMatch) {
+      //   const [_, type, host, portStr] = stopMatch;
+      //   const port = parseInt(portStr, 10);
+      //   const name = `${type}-${port}`;
+      //   // If already in map, mark as Inactive
+      //   if (resultMap[name]) {
+      //     resultMap[name].status = "Inactive";
+      //   }
+      // }
+    }
+
+    return Object.values(resultMap);
+  };
+
+  // Fetch logs from the backend, parse them for listeners
   const fetchLogs = async (showToast = false) => {
     setIsLoading(true);
     setError(null);
     try {
       const response = await apiClient.get("/st_teamserver/logs/", {
-        params: { limit: 100 }, // Adjust limit as needed
+        params: { limit: 100 }, // or whatever limit you want
       });
       if (response.status === 200) {
         const logs: LogEntry[] = response.data;
-        const extractedListeners = extractListenersFromLogs(logs);
-        setListeners(extractedListeners);
+        const extracted = extractListenersFromLogs(logs);
+        setListeners(extracted);
 
-        // Only show success toast when "showToast" is true
         if (showToast) {
           toast.success("Listeners loaded successfully.", {
             position: "top-right",
@@ -116,102 +157,34 @@ export function ListenersContent() {
     }
   };
 
-  // Function to extract listeners from logs
-  const extractListenersFromLogs = (logs: LogEntry[]): Listener[] => {
-    const listenersMap: { [key: string]: Listener } = {};
-
-    const listenerStartPattern = /Started (\w+) listener \(([\d.]+):(\d+)\)/i;
-    const listenerStopPattern = /TeamServer stopped on\s+([\d.]+):(\d+)/i;
-
-    // Iterate over logs in reverse to get the latest status
-    for (let i = logs.length - 1; i >= 0; i--) {
-      const log = logs[i];
-      const message = log.message;
-
-      // Check for listener start
-      const startMatch = message.match(listenerStartPattern);
-      if (startMatch) {
-        const [, type, host, portStr] = startMatch;
-        const port = parseInt(portStr, 10);
-        const name = `${type}-${port}`;
-        if (!listenersMap[name]) {
-          listenersMap[name] = {
-            name,
-            listenerType: type,
-            host,
-            port,
-            status: "Active",
-            startTime: log.time,
-          };
-        }
-        continue;
-      }
-
-      // Check for listener stop
-      const stopMatch = message.match(listenerStopPattern);
-      if (stopMatch) {
-        const [, host, portStr] = stopMatch;
-        const port = parseInt(portStr, 10);
-        // Attempt to find the listener by matching host and port
-        const listener = Object.values(listenersMap).find(
-          (lst) => lst.host === host && lst.port === port
-        );
-        if (listener) {
-          listener.status = "Inactive";
-          listener.startTime = log.time;
-        }
-        continue;
-      }
-    }
-
-    return Object.values(listenersMap);
-  };
-
-  // On component mount, start polling every 10 seconds, but do NOT show success toast automatically
   useEffect(() => {
-    fetchLogs(); // no toast on initial load
-    const interval = setInterval(() => {
-      setIsRefreshing(true);
-      fetchLogs().finally(() => setIsRefreshing(false));
-    }, 10000); // Refresh every 10 seconds
-
-    return () => clearInterval(interval);
+    // Initial load
+    fetchLogs();
+    // Optionally you could poll logs:
+    // const interval = setInterval(() => {
+    //   setIsRefreshing(true);
+    //   fetchLogs().finally(() => setIsRefreshing(false));
+    // }, 10000);
+    // return () => clearInterval(interval);
   }, []);
 
   const handleRefresh = () => {
     setIsRefreshing(true);
-    // Pass true here to show the success toast
     fetchLogs(true).finally(() => setIsRefreshing(false));
   };
 
   const handleConnect = (listener: Listener) => {
-    // toast saying feature not implemented
-    toast.info("Feature not implemented yet.", {
+    toast.info(`Connect to ${listener.name} not implemented yet.`, {
       position: "top-right",
       autoClose: 2000,
     });
   };
 
   const handleToggleFavorite = (listener: Listener) => {
-    // // Implement the toggle favorite logic here
-    // toast.info("Feature not implemented yet.", {
-    //   position: "top-right",
-    //   autoClose: 2000,
-    // });
-
-    // allow toggling favorite status
-    const updatedListeners = listeners.map((lst) => {
-      if (lst.name === listener.name) {
-        return {
-          ...lst,
-          status: lst.status === "Active" ? "Inactive" : "Active",
-        };
-      }
-      return lst;
+    toast.info("Toggle favorite not implemented yet.", {
+      position: "top-right",
+      autoClose: 2000,
     });
-
-    setListeners(updatedListeners);
-
   };
 
   const handleCopyDetails = (listener: Listener) => {
@@ -224,8 +197,7 @@ export function ListenersContent() {
   };
 
   const handleRemove = (listenerName: string) => {
-    // Implement the remove logic here
-    toast.info("Feature not implemented yet.", {
+    toast.info("Remove not implemented yet.", {
       position: "top-right",
       autoClose: 2000,
     });
@@ -310,21 +282,11 @@ export function ListenersContent() {
                               size="icon"
                               onClick={() => handleToggleFavorite(listener)}
                             >
-                              <Star
-                                className={`h-4 w-4 ${
-                                  listener.status === "Active"
-                                    ? "fill-yellow-400"
-                                    : ""
-                                }`}
-                              />
+                              <Star className={`h-4 w-4`} />
                             </Button>
                           </TooltipTrigger>
                           <TooltipContent>
-                            <p>
-                              {listener.status === "Active"
-                                ? "Remove from favorites"
-                                : "Add to favorites"}
-                            </p>
+                            <p>Toggle favorite</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
@@ -379,7 +341,6 @@ export function ListenersContent() {
 
       <div className="flex justify-between items-center">
         <div className="flex gap-2">
-          {/* Create Listener Button */}
           <Button
             className="bg-blue-600 hover:bg-blue-700 flex items-center gap-2"
             onClick={() => router.push("/listeners/create")}
@@ -388,14 +349,15 @@ export function ListenersContent() {
             Create Listener
           </Button>
 
-          {/* Refresh Button */}
           <Button
             variant="outline"
             size="icon"
             onClick={handleRefresh}
             disabled={isRefreshing}
           >
-            <RefreshCw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
+            <RefreshCw
+              className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
+            />
           </Button>
         </div>
         <Pagination className="justify-end">

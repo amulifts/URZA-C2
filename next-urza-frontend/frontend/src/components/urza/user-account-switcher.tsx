@@ -108,7 +108,7 @@ export function UserAccountSwitcher() {
       });
   
       toast.success(`Impersonated as ${decoded.username}. Redirecting to main page...`);
-      router.push("/main");
+      router.push("/dashboard");
     } catch (err: any) {
       console.error(err);
       toast.error("Failed to impersonate user.");

@@ -1,148 +1,133 @@
-// next-urza-frontend\frontend\src\app\register\page.tsx
-
 "use client"
 
 import React, { useState } from "react"
-import { useForm } from "react-hook-form"
 import { useRouter } from "next/navigation"
-import axios from "axios"
-import { toast } from "react-toastify"
+import Link from "next/link"
 
-type FormValues = {
-  username: string
-  password: string
-  confirm_password: string
-  full_name?: string
-}
+import { toast } from "react-toastify"
+import axios from "axios"
+
+// Bring in your new template components
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 
 export default function RegisterPage() {
-  const [serverError, setServerError] = useState<string>("")
-  const [serverSuccess, setServerSuccess] = useState<string>("")
-
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    reset,
-    watch,
-  } = useForm<FormValues>({
-    defaultValues: { username: "", password: "", confirm_password: "", full_name: "" },
-  })
-
+  const [fullName, setFullName] = useState("")
+  const [username, setUsername] = useState("")
+  const [password, setPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("")
   const router = useRouter()
 
-  const onSubmit = async (data: FormValues) => {
-    if (data.password !== data.confirm_password) {
-      setServerError("Passwords do not match.")
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (password !== confirmPassword) {
       toast.error("Passwords do not match.")
       return
     }
 
+    // Here is an example of how you might call your Django endpoint
+    // If you want to use AuthContext instead, adapt accordingly.
     try {
-      setServerError("")
-      setServerSuccess("")
-
       const payload = {
-        username: data.username,
-        password: data.password,
-        confirm_password: data.confirm_password,
-        full_name: data.full_name || undefined,
+        username,
+        password,
+        confirm_password: confirmPassword,
+        full_name: fullName,
       }
-
-      const response = await axios.post(`${process.env.NEXT_PUBLIC_API_BASE_URL}/users/create`, payload, {
-        withCredentials: true,
-      })
-
-      if (response.status === 200) {
-        setServerSuccess(`User '${response.data.username}' created successfully! Redirecting to login...`)
-        toast.success(`User '${response.data.username}' created successfully! Redirecting to login...`)
-        reset()
-
-        // Redirect after a short delay
-        setTimeout(() => {
-          router.push("/login")
-        }, 2000)
+      const res = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_BASE_URL}/users/create`,
+        payload,
+        { withCredentials: true }
+      )
+      if (res.status === 200) {
+        toast.success(`User '${res.data.username}' created successfully! Redirecting to login...`)
+        router.push("/login")
       }
     } catch (error: any) {
-      if (axios.isAxiosError(error)) {
-        // Handle Django error messages as needed
-        if (error.response?.data?.detail) {
-          setServerError(error.response.data.detail)
-          toast.error(error.response.data.detail)
-        } else {
-          setServerError("An error occurred.")
-          toast.error("An error occurred.")
-        }
-      } else {
-        setServerError("An unexpected error occurred.")
-        toast.error("An unexpected error occurred.")
-      }
+      console.error(error)
+      const msg = error.response?.data?.detail || "Registration failed."
+      toast.error(msg)
     }
   }
 
   return (
-    <div className="max-w-md mx-auto p-4">
-      <h1 className="text-2xl mb-4">Register</h1>
-
-      <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col space-y-4">
-        {/* Username */}
-        <div>
-          <label className="block mb-1">Username</label>
-          <input
-            {...register("username", {
-              required: "Username is required",
-              minLength: { value: 3, message: "Username must be at least 3 characters" },
-              maxLength: { value: 150, message: "Username must be at most 150 characters" },
-            })}
-            className="border p-2 rounded w-full"
-          />
-          {errors.username && <p className="text-red-500 text-sm">{errors.username.message}</p>}
-        </div>
-
-        {/* Password */}
-        <div>
-          <label className="block mb-1">Password</label>
-          <input
-            type="password"
-            {...register("password", {
-              required: "Password is required",
-              minLength: { value: 6, message: "Password must be at least 6 characters long" },
-            })}
-            className="border p-2 rounded w-full"
-          />
-          {errors.password && <p className="text-red-500 text-sm">{errors.password.message}</p>}
-        </div>
-
-        {/* Confirm Password */}
-        <div>
-          <label className="block mb-1">Confirm Password</label>
-          <input
-            type="password"
-            {...register("confirm_password", {
-              required: "Please confirm your password",
-              validate: (value) =>
-                value === watch("password") || "Passwords do not match",
-            })}
-            className="border p-2 rounded w-full"
-          />
-          {errors.confirm_password && (
-            <p className="text-red-500 text-sm">{errors.confirm_password.message}</p>
-          )}
-        </div>
-
-        {/* Full Name (optional) */}
-        <div>
-          <label className="block mb-1">Full Name</label>
-          <input {...register("full_name")} className="border p-2 rounded w-full" />
-        </div>
-
-        <button className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600" type="submit">
-          Register
-        </button>
-      </form>
-
-      {serverError && <div className="text-red-500 mt-4">{serverError}</div>}
-      {serverSuccess && <div className="text-green-500 mt-4">{serverSuccess}</div>}
+    <div className="flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="max-w-md w-full p-4">
+        <Card className="w-full">
+          <CardHeader className="space-y-1">
+            <CardTitle className="text-2xl font-bold text-center">Create an account</CardTitle>
+            <CardDescription className="text-center">
+              Enter your details to register
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="fullName">Full Name</Label>
+                <Input
+                  id="fullName"
+                  type="text"
+                  placeholder="Enter your full name"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  required
+                  className="w-full"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="username">Username</Label>
+                <Input
+                  id="username"
+                  type="text"
+                  placeholder="Choose a username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  required
+                  className="w-full"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Create a password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  className="w-full"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <Input
+                  id="confirmPassword"
+                  type="password"
+                  placeholder="Confirm your password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  required
+                  className="w-full"
+                />
+              </div>
+              <Button type="submit" className="w-full">
+                Register
+              </Button>
+            </form>
+          </CardContent>
+          <CardFooter className="flex flex-col items-center">
+            <p className="text-sm text-muted-foreground mt-2">
+              Already have an account?{" "}
+              <Link href="/login" className="text-primary hover:underline">
+                Sign in
+              </Link>
+            </p>
+          </CardFooter>
+        </Card>
+      </div>
     </div>
   )
 }

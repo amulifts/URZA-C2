@@ -1,56 +1,88 @@
-# Python artifacts
-*.pyc
+#######################################
+# Python & Django
+#######################################
+__pycache__/
+*.py[cod]
 *.pyo
 *.pyd
-__pycache__/
-*.sqlite3
+*.egg-info/
+.eggs/
+*.log
 
-# Bytecode-compiled Python files
-*.cpython-*.pyc
-
-# Virtual environment
-venv/
+# Environment & credentials
 .env
 *.env
 
-# Node.js artifacts
-node_modules/
-*.log
-*.cache
-
-# Django-specific
-*.log
-*.pot
-*.pyc
-*.pyo
-*.pyd
+# SQLite (if any)
 db.sqlite3
-/static/
-media/
+*.db
 
-# macOS-specific
+# macOS
 .DS_Store
-.AppleDouble
-.LSOverride
 
-# Editor/IDE-specific
+# Virtual environments
+venv/
+ENV/
+env/
+djangoenv/
+
+#######################################
+# Node.js & Next.js
+#######################################
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.next/
+out/
+
+#######################################
+# Build artifacts
+#######################################
+build/
+dist/
+*.egg-info
+*.so
+*.tmp
+*.bak
+*.old
+
+#######################################
+# Coverage and testing
+#######################################
+.coverage
+htmlcov/
+.tox/
+*.cover
+*.py,cover
+coverage.xml
+nosetests.xml
+
+#######################################
+# IDE / Editor
+#######################################
 .vscode/
 .idea/
 *.swp
 *.swo
-*.bak
 
-# Build artifacts
-/dist/
-build/
-
-# Logs
+#######################################
+# Logs & other generated files
+#######################################
+debug/
 *.log
+*.pid
 
-# Custom project paths
-urza/urza/core/teamserver/modules/boo/minidump.py
-urza/urza/core/teamserver/stagers/__pycache__/
+#######################################
+# Certificates or keys (if any)
+#######################################
+certs/
+keys/
+*.pem
+*.crt
+*.key
 
-# Ignore all __pycache__ and compiled Python files under teamserver
-urza/urza/core/teamserver/**/__pycache__/
-urza/urza/core/teamserver/**/*.pyc
+#######################################
+# Migrations (optional if you don't track them)
+#######################################
+migrations/

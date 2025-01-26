@@ -1,4 +1,4 @@
-// next-urza-frontend/frontend/src/app/teamserver/page.tsx
+// URZA-C2/next-urza-frontend/frontend/src/app/teamserver/page.tsx
 
 import { TeamServer } from "@/components/urza/teamserver/teamserver"
 
